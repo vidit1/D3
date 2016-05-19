@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+    body {
+        font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
+
+
+    .line {
+        fill: none;
+        stroke: steelblue;
+        stroke-width: 2px;
+    }
+
+    .line-hover{
+        stroke-width: 4px;
+    }
+
+    #test{
+
+    }
+
+    .legend .series {
+        cursor: pointer;
+    }
+
+    .legend circle {
+        stroke-width: 2px;
+        fill-opacity: 0;
+    }
+
+    .legend .disabled circle {
+        fill-opacity: 2;
+    }
+
+
+    div.tooltip {
+        position: absolute;
+        text-align: center;
+        width: 60px;
+        height: 28px;
+        padding: 2px;
+        font: 12px sans-serif;
+        background: lightsteelblue;
+        border: 0px;
+        border-radius: 8px;
+        pointer-events: none;
+    }
+    rect {
+        fill: #ddd;
+
+    }
+    rect.zoom {
+        stroke: steelblue;
+        fill-opacity: 0.5;
+    }
+
+    svg *::selection {
+        background : transparent;
+    }
+
+    svg *::-moz-selection {
+        background:transparent;
+    }
+
+    svg *::-webkit-selection {
+        background:transparent;
+    }
+
+
+
+    /********************
+     * TOOLTIP CSS
+     */
+
+    .nvtooltip {
+        position: absolute;
+        background-color: rgba(255,255,255,1);
+        padding: 10px;
+        border: 1px solid #ddd;
+
+        font-family: Arial;
+        font-size: 13px;
+
+        /*transition: opacity 500ms linear;*/
+        /*-moz-transition: opacity 500ms linear;*/
+        /*-webkit-transition: opacity 500ms linear;*/
+
+        /*transition-delay: 500ms;*/
+        /*-moz-transition-delay: 500ms;*/
+        /*-webkit-transition-delay: 500ms;*/
+
+        -moz-box-shadow: 4px 4px 12px rgba(0,0,0,.5);
+        -webkit-box-shadow: 4px 4px 12px rgba(0,0,0,.5);
+        box-shadow: 4px 4px 12px rgba(0,0,0,.5);
+
+        -moz-border-radius: 15px;
+        border-radius: 15px;
+    }
+
+    .nvtooltip h3 {
+        margin: 0;
+        padding: 0;
+        text-align: center;
+    }
+
+    .nvtooltip p {
+        margin: 0;
+        padding: 0;
+
+    }
+
+    .nvtooltip span {
+        display: inline-block;
+        margin: 2px 0;
+    }
+
+
+
+</style>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tipsy/1.0.3/jquery.tipsy.min.css" rel="stylesheet" type="text/css">
+<body>
+<div id="test"></div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tipsy/1.0.3/jquery.tipsy.min.js"></script>
+<script src="bower_components/moment/min/moment.min.js"></script>
+<script src="d3.js"></script>
+<script src="d3legend.js"></script>
+<script src="tooltip.js"></script>
+<script>
+
+    //Setting margin and width and height
+    var margin = {top: 20, right: 80, bottom: 90, left: 50},
+
+            width = 960 - margin.left - margin.right,
+            height = 550 - margin.top - margin.bottom;
+
+    //Parse date function
+    var parseDate = d3.time.format("%Y%m%d").parse;
+
+
+    //x
+    var x = d3.time.scale().range([0, width]);
+
+    //y
+    var y = d3.scale.linear().range([height, 0]);
+
+    var color = d3.scale.category10();
+
+    // Defining xAxis location at bottom the axes
+    var xAxis = d3.svg.axis().scale(x).orient("bottom");
+
+    //Defining yAxis location at left the axes
+    var yAxis = d3.svg.axis()
+            .scale(y)
+            .orient("left");
+
+    //graph type line and
+    var line = d3.svg.line()
+            .x(function(d) {
+                return x(d.date); })
+            .y(function(d) { return y(d.temperature); });
+
+
+
+    //calling legend and setting width,height,margin,color
+    var legend= d3Legend().height(height+ margin.top + margin.bottom).width(width).margin(margin).color(color);
+
+
+
+    //Reading Data
+    d3.tsv("data-1.csv", function(error, data) {
+        //If error while getting data
+        if (error) throw error;
+
+        //Setting domain for the colors with te exceptioon of date column
+        color.domain(d3.keys(data[0]).filter(function(key) { return key !== "date"; }));
+
+        //Parsing date in the required format
+        data.forEach(function(d) {
+            d.date = parseDate(d.date);
+        });
+
+        //Formatting data and assigning to cities variable
+        var cities = color.domain().map(function(name) {
+            return {
+                label: name,
+                data: data.map(function(d) {
+                    return {date: d.date, temperature: +d[name]};
+                }),
+                hover:false,
+                disabled:true
+
+            };
+        });
+        var series,dataLength,zoomFlag = false;
+
+        //Update function to create chart
+        function update() {
+
+            //Empty the container before loading
+            d3.select("#test > *").remove();
+
+
+            //Adding chart and placing chart at specific locaion using translate
+            var svg = d3.select("#test")
+                    .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("class","chart")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            //Filtering data if the column is disable or not
+            series = cities.filter(function (d) {
+                return d.disabled;
+            });
+
+
+            //storing the length of data so that the check can
+            dataLength = series[0].data.length;
+
+            //setting the upper an d lower limit in x - axis
+            x.domain([
+                new Date( new Date(d3.min(series, function(c) { return d3.min(c.data, function(v) { return v.date; }); })).getTime()),
+                new Date( new Date(d3.max(series, function(c) { return d3.max(c.data, function(v) { return v.date; }); })).getTime())
+            ]);
+
+            //setting the upper an d lower limit in y - axis
+            y.domain([
+                d3.min(series, function(c) { return d3.min(c.data, function(v) { return v.temperature; }); })-4,
+                d3.max(series, function(c) { return d3.max(c.data, function(v) { return v.temperature; }); })+4
+            ]);
+
+            //Appending legend box
+            svg.append('g')
+                    .attr('class', 'legendWrap');
+
+            //Appending x - axis
+            svg.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(xAxis);
+
+            //Appending y - axis
+            svg.append("g")
+                    .attr("class", "y axis")
+                    .call(yAxis)
+                    .append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 6)
+                    .attr("dy", ".71em")
+                    .style("text-anchor", "end")
+                    .text("Temperature (ºF)");
+
+
+            //Appending line in chart
+            svg.selectAll(".city")
+                    .data(series)
+                    .enter().append("g")
+                    .attr("class", "city")
+                    .append("path")
+                    .attr("class", "line")
+                    .attr("d", function (d) {
+                        return line(d.data);
+                    })
+                    .attr("data-legend", function (d) {
+                        return d.label
+                    })
+                    .style("stroke", function (d) {
+                        return color(d.label);
+                    })
+                    .classed("line-hover", false);
+
+
+
+            //selecting all the paths
+            var path = svg.selectAll("path");
+
+            //For each line appending the circle at each point
+            series.forEach(function (data) {
+                var visibility = "visible";
+                //if the length of the
+                if(data.data.length>270){
+                    visibility = "hidden";
+                }
+                svg.selectAll("dot")
+                        .data(data.data)
+                        .enter().append("circle")
+                        .attr('class','clips')
+                        .attr('id', function (d) {
+                            return parseInt(x(d.date))
+                        })
+                        .style('visibility',visibility)
+                        .attr("r", 3)
+                        .style('fill', color(data.label))
+                        .attr("cx", function (d) {
+                            return x(d.date);
+                        })
+                        .attr("cy", function (d) {
+                            return y(d.temperature);
+                        });
+
+            });
+
+
+            var mouseMoveHide = 'visible',
+                    HoverFlag =true;
+            //
+            d3.selectAll('#test ').on('mousemove', function () {
+                        nvtooltip.cleanup();
+                        var cord = d3.mouse(this);
+                        if(HoverFlag){
+                            mouseMoveHide = 'visible'
+                        }else{
+                            mouseMoveHide = 'hidden'
+
+                        }
+                        d3.selectAll('circle[class="clips"]')
+                                .attr('r',dataLength>200?0:3);
+                        var flag= true;
+                        var xpos = parseInt(cord[0]-margin.left);
+                        while(d3.selectAll("circle[id='"+(xpos) +"']")[0].length==0) {
+                            console.log(xpos);
+                            if (flag) {
+                                xpos++
+                            } else {
+                                xpos--
+                            }
+                            if (xpos >= width && flag) {
+                                flag = false;
+                            }
+                        }
+//
+                        var hover = d3.selectAll("circle[id='"+xpos +"']")
+                                .attr('r',6)
+                                .style('visibility',mouseMoveHide);
+                        var data = hover.data();
+                        nvtooltip.show([cord[0],cord[1]], '<h3>'+moment(data[0].date).format("YYYY-MM-DD")+'</h3>');
+
+                    })
+                    .on('mouseout',function(){
+                        nvtooltip.cleanup();
+                        var radius;
+                        if(dataLength>200){
+                            radius = 0
+                        }else
+                        {
+                            radius = 3
+                        }
+                        d3.selectAll('circle[class="clips"]')
+                                .attr('r',radius)
+                                .style('visibility','visible');
+                    });
+
+
+            //zoming function
+            d3.selectAll('#test')
+                    .on("mousedown", function() {
+                        //remove all the rectangele created before
+                        d3.selectAll("rect").remove();
+
+                        //assign this toe,
+                        var e = this,
+                                origin = d3.mouse(e),   // origin is the array containing the location of cursor from where the rectangle is created
+                                rect = svg.append("rect").attr("class", "zoom"); //apending the rectangle to the chart
+                        d3.select("body").classed("noselect", true);  //disable select
+                        //find the min between the width and and cursor location to prevent the rectangle move out of the chart
+                        origin[0] = Math.max(0, Math.min(width, (origin[0]-margin.left)));
+                        HoverFlag = false;
+
+
+                        //if the mouse is down and mouse is moved than start creating the rectangle
+                        d3.select(window)
+                                .on("mousemove.zoomRect", function() {
+
+                                    //current location of mouse
+                                    var m = d3.mouse(e);
+                                    //find the min between the width and and cursor location to prevent the rectangle move out of the chart
+                                    m[0] = Math.max(0, Math.min(width, (m[0]-margin.left)));
+
+                                    //asign width and height to the rectangle
+                                    rect.attr("x", Math.min(origin[0], m[0]))
+                                            .attr("y", 0)
+                                            .attr("width", Math.abs(m[0] - origin[0]))
+                                            .attr("height", height);
+                                })
+                                .on("mouseup.zoomRect", function() {  //function to run mouse is released
+                                    d3.select(window).on("mousemove.zoomRect", null).on("mouseup.zoomRect", null);
+
+                                    //allow selection
+                                    d3.select("body").classed("noselect", false);
+                                    var m = d3.mouse(e);
+
+                                    //the position where the mouse the released
+                                    m[0] = Math.max(0, Math.min(width, (m[0]-margin.left)));
+
+                                    //check that the origin location on x axis of the mouse should not be eqaul to last
+                                    if (m[0] !== origin[0]) {
+
+                                        //starting filtering data
+                                        series.forEach(function (d) {
+
+                                            //slicing each line if and only if the length of data > 50 (minimum no of ticks should be present in the graph)
+                                            if(d.data.length>50) {
+                                                d.data = d.data.filter(function (a) {
+                                                    if (m[0] < origin[0]) {
+                                                        return x(a.date) >= m[0] && x(a.date) <= origin[0];
+                                                    } else {
+                                                        return x(a.date) <= m[0] && x(a.date) >= origin[0];
+                                                    }
+                                                });
+                                            }
+                                        });
+                                        zoomFlag =true;
+                                        //calling the update function to update the graph
+                                        update();
+                                    }
+                                    HoverFlag  = true;
+                                    rect.remove();
+                                }, true);
+                        d3.event.stopPropagation();
+                    });
+
+
+
+            //legend location
+            svg.select('.legendWrap').datum(cities)
+                    .attr('transform', 'translate(' + 0+ ',' + 0 +')')
+                    .call(legend);
+
+
+
+
+            //When in mouse is over the line than focus the line
+            path.on('mouseover', function (d) {
+                d.hover = true;
+                hover()
+            });
+
+            //When in mouse is put the line than focus the line
+            path.on('mouseout', function (d) {
+                d.hover = false;
+                hover()
+            });
+
+            //on legend mouse over highlight the respective line
+            legend.dispatch.on('legendMouseover', function(d) {
+                d.hover = true;
+                hover()
+            });
+
+            //on legend mouse out set the line to normal
+            legend.dispatch.on('legendMouseout',function(d){
+                d.hover = false;
+                hover()
+            });
+
+
+            //on legend click toggle line
+            legend.dispatch.on('legendClick', function (d) {
+                d.disabled = !d.disabled;
+                update();
+            });
+
+
+
+            function hover(){
+                d3.selectAll("path").classed("line-hover", function (d) {
+                    return d.hover
+                })
+            }
+        }
+        update();
+
+
+    });
+
+
+</script>
