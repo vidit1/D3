@@ -140,7 +140,7 @@
     //Setting margin and width and height
     var margin = {top: 20, right: 80, bottom: 90, left: 50},
 
-            width = 960 - margin.left - margin.right,
+            width = $("#test").width() - margin.left - margin.right,
             height = 550 - margin.top - margin.bottom;
 
     //Parse date function
@@ -318,18 +318,24 @@
             d3.selectAll('#test ').on('mousemove', function () {
                         nvtooltip.cleanup();
                         var cord = d3.mouse(this);
+
+
                         if(HoverFlag){
                             mouseMoveHide = 'visible'
                         }else{
                             mouseMoveHide = 'hidden'
 
                         }
+
+                        if(cord[1]<margin.top||cord[1]>height){
+                            return
+                        }
+
                         d3.selectAll('circle[class="clips"]')
                                 .attr('r',dataLength>200?0:3);
                         var flag= true;
                         var xpos = parseInt(cord[0]-margin.left);
                         while(d3.selectAll("circle[id='"+(xpos) +"']")[0].length==0) {
-                            console.log(xpos);
                             if (flag) {
                                 xpos++
                             } else {
@@ -363,8 +369,10 @@
 
 
             //zoming function
-            d3.selectAll('#test')
+            d3.select('#test')
                     .on("mousedown", function() {
+
+
                         //remove all the rectangele created before
                         d3.selectAll("rect").remove();
 
@@ -378,6 +386,10 @@
                         HoverFlag = false;
 
 
+                        if(origin[1]<margin.top||origin[1]>height){
+                            HoverFlag = true;
+                            return
+                        }
                         //if the mouse is down and mouse is moved than start creating the rectangle
                         d3.select(window)
                                 .on("mousemove.zoomRect", function() {

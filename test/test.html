@@ -152,6 +152,7 @@
 <script src="../tooltip.js"></script>
 <script>
 
+    var numberOfTicks = 10;
     var parseDate = d3.time.format("%Y%m%d").parse;
 
     var n = 20, // number of samples
@@ -232,7 +233,7 @@
             }));
             var mult = Math.max(1, Math.floor(width / x0.domain().length));
             x0.rangeRoundBands([0, (x0.domain().length * mult)], 0.1, 0);
-            var tickInterval = parseInt(x0.domain().length / 10);
+            var tickInterval = parseInt(x0.domain().length / numberOfTicks);
 
 
             var ticks = x0.domain().filter(function (d, i) {
