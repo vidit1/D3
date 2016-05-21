@@ -50,7 +50,7 @@ function d3Legend() {
                 .text(function(d) { return d.label })
                 .attr('text-anchor', 'start')
                 .attr('dy', '.32em')
-                .attr('dx', '8')
+                .attr('dx', '12')
                 .attr('font-size','15');
             series.classed('disabled', function(d) { return d.disabled });
             series.exit().remove();
@@ -66,7 +66,7 @@ function d3Legend() {
                     xpos = newxpos;
 
                     //TODO: 1) Make sure dot + text of every series fits horizontally, or clip text to fix
-                    //      2) Consider making columns in line so dots line up
+                    //TODO: 2) Consider making columns in line so dots line up
                     //         --all labels same width? or just all in the same column?
                     //         --optional, or forced always?
                     if (width < margin.left + margin.right + xpos + length) {
