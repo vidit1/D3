@@ -11,8 +11,23 @@
         fill: none;
         stroke: #000;
         shape-rendering: crispEdges;
+
     }
 
+    .y path {
+        display: none;
+    }
+
+    .y > .tick line,
+    .x > .tick line,
+    .x > path
+    {
+        opacity: 0.18 !important;
+    }
+
+    .axis-label{
+        font-size: 12px;
+    }
     .line {
         fill: none;
         stroke: steelblue;
@@ -128,22 +143,32 @@
 <div id="test"></div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tipsy/1.0.3/jquery.tipsy.min.js"></script>
+<script src="hammer.js"></script>
 <script src="bower_components/moment/min/moment.min.js"></script>
 <script src="d3.js"></script>
 <script src="d3legend.js"></script>
 <script src="tooltip.js"></script>
 <script>
 
+    //TODO 1. Handling no data
+    //TODO 2. All the legends are unchecked display no data to display
+    //TODO 3. Error handling in D3
+    //TODO 4. Mobile view pan functionality
+    //TODO 5. Mobile view pinch functionality for zooming
+    //TODO 6. While zooming through selection add additional data to the zoomed area
+    //TODO 7. Styling for mobile view(font-size of heading, ticks and axis label increase)
 
     function d3Line(obj) {
 
-        var data = obj;
+        var chart = {};
+
+        var data = obj.data;
 
         //Setting margin and width and height
         var margin = {top: 20, right: 30, bottom: 90, left: 50},
 
-                width = $("#test").width() - margin.left - margin.right,
-                height = 550 - margin.top - margin.bottom;
+                width = $(obj.divId).width() - margin.left - margin.right,
+                height = obj.height?obj.height:550 - margin.top - margin.bottom;
 
         //Parse date function
         var parseDate = d3.time.format("%Y%m%d").parse;
@@ -155,17 +180,21 @@
                 .rangePoints([0, width], 0.1, 0);
 
         //y
-        var y = d3.scale.linear().range([height, 0]);
+        var y = d3.scale.linear().range([height, margin.top-10]);
 
         var color = d3.scale.category10();
 
         // Defining xAxis location at bottom the axes
-        var xAxis = d3.svg.axis().scale(x).orient("bottom")
+        var xAxis = d3.svg.axis()
+                .scale(x)
+                .orient("bottom")
                 .tickFormat(d3.time.format("%Y-%m-%d"));
 
         //Defining yAxis location at left the axes
         var yAxis = d3.svg.axis()
                 .scale(y)
+                .innerTickSize(-width)
+
                 .orient("left");
 
         //graph type line and
@@ -181,6 +210,9 @@
         //calling legend and setting width,height,margin,color
         var legend = d3Legend().height(height + margin.top + margin.bottom).width(width).margin(margin).color(color);
 
+
+        var mouseMoveHide = 'visible',
+                HoverFlag = true;
 
         //Setting domain for the colors with te exceptioon of date column
         color.domain(d3.keys(data[0]).filter(function (key) {
@@ -207,14 +239,14 @@
         var series, dataLength, zoomFlag = false;
 
         //chart function to create chart
-        function chart() {
+        chart.plot =function () {
 
             //Empty the container before loading
-            d3.select("#test > *").remove();
+            d3.select(obj.divId+" > *").remove();
 
 
             //Adding chart and placing chart at specific locaion using translate
-            var svg = d3.select("#test")
+            var svg = d3.select(obj.divId)
                     .append("svg")
                     .attr("width", width + margin.left + margin.right)
                     .attr("height", height + margin.top + margin.bottom)
@@ -236,9 +268,9 @@
                 return d.date;
             }));
 
-//            var mult = Math.max(1, Math.floor(width / x.domain().length));
+            //var mult = Math.max(1, Math.floor(width / x.domain().length));
             x.rangePoints([0, width], 0.1, 0);
-//            console.log("Mult = ",mult,x.domain().length,width)
+            //console.log("Mult = ",mult,x.domain().length,width)
             //setting the upper an d lower limit in y - axis
             y.domain([
                 d3.min(series, function (c) {
@@ -250,7 +282,7 @@
                     return d3.max(c.data, function (v) {
                         return v.temperature;
                     });
-                }) + 4
+                }) + 5
             ]);
 
 
@@ -259,7 +291,7 @@
                 return !(i % tickInterval);
             });
             xAxis.tickValues(ticks);
-
+            yAxis.innerTickSize(-width);
 
             //Appending legend box
             svg.append('g')
@@ -270,12 +302,26 @@
                     .attr('transform', 'translate(' + 0 + ',' + 0 + ')')
                     .call(legend);
 
+            //Chart Title
+            svg.append('g').attr('class','titleWrap').append('text')
+                    .attr("x", (width / 2))
+                    .attr("y",  (margin.top / 2))
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "20px")
+                    .text(obj.title);
 
             //Appending x - axis
             svg.append("g")
                     .attr("class", "x axis")
                     .attr("transform", "translate(0," + height + ")")
-                    .call(xAxis);
+                    .call(xAxis)
+                    .append("text")
+                    .attr("x", (width / 2))
+                    .attr("y", 35)
+                    .style("text-anchor", "middle")
+                    .attr("class","axis-label")
+                    .text(obj.xAxis&&obj.xAxis.label?obj.xAxis.label:"");
+
 
             //Appending y - axis
             svg.append("g")
@@ -284,9 +330,11 @@
                     .append("text")
                     .attr("transform", "rotate(-90)")
                     .attr("y", 6)
-                    .attr("dy", ".71em")
-                    .style("text-anchor", "end")
-                    .text("Temperature (ºF)");
+                    .attr("dy", "-3.71em")
+                    .attr("dx", -((height)/2)-margin.top)
+                    .style("text-anchor", "middle")
+                    .attr("class","axis-label")
+                    .text(obj.yAxis&&obj.yAxis.label?obj.yAxis.label:"");
 
 
             //Appending line in chart
@@ -338,11 +386,8 @@
             });
 
 
-            var mouseMoveHide = 'visible',
-                    HoverFlag = true;
-
             //Hover functionality
-            d3.selectAll('#test ').on('mousemove', function () {
+            d3.selectAll(obj.divId).on('mousemove', function () {
                 nvtooltip.cleanup();
                 var cord = d3.mouse(this);
 
@@ -372,7 +417,7 @@
                         flag = false;
                     }
                 }
-//
+
                 var hover = d3.selectAll("circle[id='" + xpos + "']")
                         .attr('r', 6)
                         .style('visibility', mouseMoveHide);
@@ -395,7 +440,7 @@
 
 
             //zoming function
-            d3.select('#test')
+            d3.select(obj.divId)
                     .on("mousedown", function () {
 
 
@@ -427,9 +472,9 @@
 
                                     //asign width and height to the rectangle
                                     rect.attr("x", Math.min(origin[0], m[0]))
-                                            .attr("y", 0)
+                                            .attr("y", margin.top)
                                             .attr("width", Math.abs(m[0] - origin[0]))
-                                            .attr("height", height);
+                                            .attr("height", height-margin.top);
                                 })
                                 .on("mouseup.zoomRect", function () {  //function to run mouse is released
                                     d3.select(window).on("mousemove.zoomRect", null).on("mouseup.zoomRect", null);
@@ -460,7 +505,7 @@
                                         });
                                         zoomFlag = true;
                                         //calling the chart function to update the graph
-                                        chart();
+                                        chart.plot();
                                     }
                                     HoverFlag = true;
                                     rect.remove();
@@ -497,7 +542,7 @@
             //on legend click toggle line
             legend.dispatch.on('legendClick', function (d) {
                 d.disabled = !d.disabled;
-                chart();
+                chart.plot();
             });
 
 
@@ -506,30 +551,58 @@
                     return d.hover
                 })
             }
-        }
 
-        chart();
+
+            var div = document.getElementById(obj.divId);
+            var hammerFunctionality = new Hammer(div)
+            hammerFunctionality.on("pinch  panleft panright",function (ev) {
+                if(window.innerWidth<767){
+                    alert(1)
+                    console.log(ev)
+                }
+            })
+        };
+
+        chart.plot();
 
 
         window.addEventListener('resize', function () {
-            width = $("#test").width() - margin.left - margin.right;
-            console.log(width);
-            chart();
+            width = $(obj.divId).width() - margin.left - margin.right;
+            chart.plot();
         });
 
-        chart.updateHeight = function (newHeight) {
-            height = newHeight;
-            chart();
-        }
+        chart.height = function (newHeight) {
+            if(newHeight!=height) {
+                height = newHeight;
+                chart.plot();
+            }
+        };
+
+        chart.margin = function (_) {
+            if(_) {
+                margin = _;
+                chart.plot();
+            }
+        };
 
         return chart;
 
 
     }
     d3.tsv("data-1.csv", function (error, data) {
-
-
-        var chart = d3Line(data);
+        console.log(data);
+        var obj={
+            data:data,
+            divId:"#test",
+            title:"Test Graph",
+            xAxis:{
+                label:"Date"
+            },
+            yAxis:{
+                label:"Number"
+            }
+        };
+        var chart = d3Line(obj);
         console.log(chart)
     })
 
