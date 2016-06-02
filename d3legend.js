@@ -55,7 +55,6 @@ function d3Legend() {
             series.classed('disabled', function(d) { return d.disabled });
             series.exit().remove();
 
-            console.log(width);
             var ypos = 5,
                 newxpos = 5,
                 maxwidth = 0,
@@ -81,7 +80,6 @@ function d3Legend() {
                 });
 
             //position legend as far right as possible within the total width
-            console.log(height,margin);
             g.attr('transform', 'translate(' + 0 + ',' + (height-margin.top-margin.bottom/2+8) + ')');
 
         });
