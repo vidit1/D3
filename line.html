@@ -159,12 +159,15 @@
 
     //TODO 1. Handling no data  (done)
     //TODO 2. All the legends are unchecked display no data to display (done)
-    //TODO 3. Error handling in D3
+    //TODO 3. Error handling in D3 (done)
     //TODO 4. Mobile view pan functionality
     //TODO 5. Mobile view pinch functionality for zooming
     //TODO 6. While zooming through selection add additional data to the zoomed area
+    //TODO 6.1 Zoom action (-->   <--) zoom in(done)
+    //TODO 6.1 Zoom action (<--   -->) zoom out(done)
+    //TODO 6.1 Zoom action (-->   -->) zoom in/out with left panning
+    //TODO 6.1 Zoom action (<--   <--) zoom in/out with right panning
     //TODO 7. Styling for mobile view(font-size of heading, ticks and axis label increase)
-    var xAlias
     function d3Line(obj) {
 
         var chart = {};
@@ -185,7 +188,6 @@
         var x = d3.scale.ordinal()
                 .domain([0, 1])
                 .rangePoints([0, width], 0.1, 0);
-        xAlias = x
         //y
         var y = d3.scale.linear().range([height, margin.top]);
 
@@ -198,7 +200,6 @@
                 .tickFormat(function(d){
                     return moment(d).format("YYYY-MM-DD")
                 });
-        xAxisAlias = xAxis;
         //Defining yAxis location at left the axes
         var yAxis = d3.svg.axis()
                 .scale(y)
@@ -254,17 +255,17 @@
         var pinch = new Hammer.Pinch();
         var pan = new Hammer.Pan();
         var tap = new Hammer.Tap();
+        var pinchFlag = false,startPointsPinch,endPointsPinch,startLocation = 0;
         pinch.recognizeWith(pan);
 
         mc.add([pinch, pan,tap]);
 
         // Prevent long press saving on mobiles.
-        div.addEventListener('touchstart', function (e) {
-            e.preventDefault()
-        });
-        var pinchFlag = false;
+//        div.addEventListener('touchstart', function (e) {
+//            e.preventDefault()
+//        });
 
-        var startPointsPinch,endPointsPinch;
+
         mc.on("panstart", function (ev) {
             if(pinchFlag==false)
                 console.log("panstart",ev.center)
@@ -280,22 +281,97 @@
 
         mc.on("pinchstart", function (ev) {
             pinchFlag=true;
-            console.log("pinch start",ev)
+            console.log("pinch start");
             startPointsPinch  = ev.pointers;
-            console.log(startPointsPinch);
 
         });
 
         mc.on("pinchend", function (ev) {
-            console.log("pinchend",ev);
+            console.log("pinchend");
             endPointsPinch  = ev.pointers;
-            console.log(endPointsPinch);
-            console.log("end pinch x",endPointsPinch[0].clientX,endPointsPinch[1].clientX);
-            console.log("start pinch x",startPointsPinch[0].clientX,startPointsPinch[1].clientX);
+            var xpos  = parseInt(startPointsPinch[0].clientX), flag = true;
+            var startFlag = startPointsPinch[0].clientX<startPointsPinch[1].clientX;
+            var xPinch = [
+                [//Starting info for x location
+                    startFlag==true?startPointsPinch[0].clientX:startPointsPinch[1].clientX,
+                    startFlag==true?startPointsPinch[1].clientX:startPointsPinch[0].clientX
+                ],
+                [//Ending info for x location
+                    startFlag==true?endPointsPinch[0].clientX:endPointsPinch[1].clientX,
+                    startFlag==true?endPointsPinch[1].clientX:endPointsPinch[0].clientX
+                ]
+            ];
+            var yPinch = [
+                [//Starting info for y location
+                    startFlag==true?startPointsPinch[0].clientY:startPointsPinch[1].clientY,
+                    startFlag==true?startPointsPinch[1].clientY:startPointsPinch[0].clientY
+                ],
+                [//Ending info for y location
+                    startFlag==true?endPointsPinch[0].clientY:endPointsPinch[1].clientY,
+                    startFlag==true?endPointsPinch[1].clientY:endPointsPinch[0].clientY
+                ]
+            ];
+            console.log("Chart Name",obj.divId);
+            console.log("Change index first point",parseInt(parseInt(xPinch[0][0])/(width/x.domain().length)),"-->",parseInt(parseInt(xPinch[1][0])/(width/x.domain().length)));
+            console.log("Change index second point",parseInt(parseInt(xPinch[0][1])/(width/x.domain().length)),"-->",parseInt(parseInt(xPinch[1][1])/(width/x.domain().length)));
+            console.log("trigger = ",
+                    (parseInt(parseInt(xPinch[0][1])/(width/x.domain().length))-parseInt(parseInt(xPinch[0][0])/(width/x.domain().length)))
+                    <
+                    (parseInt(parseInt(xPinch[1][1])/(width/x.domain().length))-parseInt(parseInt(xPinch[1][0])/(width/x.domain().length)))?"Zoom IN":"Zoom OUT");
+
+            var startLength =(parseInt(parseInt(xPinch[0][0])/(width/x.domain().length))-parseInt(parseInt(xPinch[1][0])/(width/x.domain().length)));
+            var endLength =(parseInt(parseInt(xPinch[1][1])/(width/x.domain().length))-parseInt(parseInt(xPinch[0][1])/(width/x.domain().length)));
+            console.log("points to be shifted from front",startLength);
+            console.log("points to be shifted from end",endLength);
+            startLocation =(startLocation + startLength)<0?0:(startLocation + startLength);
+            //starting filtering data
+            cities.forEach(function (d,i) {
+
+
+
+                //slicing each line if and only if the length of data > 50 (minimum no of ticks should be present in the graph)
+                    if(startLength>0&&endLength>0) {
+                        console.log("pure zoom in");
+                        if(d.data.length>10)
+                        d.data = d.data.splice(startLength, d.data.length - endLength);
+                    }
+
+                    else if(startLength<0&&endLength<0){
+                        console.log("\n")
+                        console.log("\n")
+                        console.log("pure zoom out");
+                        console.log("Initial data length",d.data.length);
+                        console.log("start location = ",(startLocation),(startLocation)<0?0:(startLocation));
+                        console.log("end location   = ",(-startLength+d.data.length-endLength),rawData[i].data.length,(-startLength+d.data.length-endLength)>rawData[i].data.length,((-startLength+d.data.length-endLength)>rawData[i].data.length?rawData[i].data.length:(-startLength+d.data.length-endLength)));
+                        d.data = rawData[i].data.slice((startLocation)<0?0:(startLocation),(-startLength + d.data.length-endLength)>rawData[i].data.length?rawData[i].data.length:(-startLength + d.data.length-endLength));
+                        console.log("final data length",d.data.length)
+                        console.log("\n");
+                        console.log("\n");
+                    }
+
+                    else if(startLength<0&&endLength<0){
+
+                    }
+
+                    else if(startLength<0&&endLength<0){
+
+                    }
+            });
+            console.log("starting index in original data=",startLocation,cities[0].data[0]);
+            rawData[0].data.forEach(function (d,i) {
+                if(moment(d.date).format("YYYY-MM-DD")==moment(cities[0].data[0].date).format("YYYY-MM-DD")){
+                    console.log("checking data",i);
+                    return;
+                }
+            });
+            chart.plot();
+
             setTimeout(function () {
-               pinchFlag = false;
+                pinchFlag = false;
             },500)
         });
+
+
 
 
 
