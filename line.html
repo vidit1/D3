@@ -255,7 +255,7 @@
         var pinch = new Hammer.Pinch();
         var pan = new Hammer.Pan();
         var tap = new Hammer.Tap();
-        var pinchFlag = false,startPointsPinch,endPointsPinch,startLocation = 0;
+        var pinchFlag = false,startPointsPinch,endPointsPinch,startLocation = 0,panStart,panEnd;
         pinch.recognizeWith(pan);
 
         mc.add([pinch, pan,tap]);
@@ -267,15 +267,46 @@
 
 
         mc.on("panstart", function (ev) {
-            if(pinchFlag==false)
-                console.log("panstart",ev.center)
+            if(pinchFlag==false) {
+                panStart = ev.center;
+            }
 
         });
 
 
         mc.on("panend", function (ev) {
-            if(pinchFlag==false)
-                console.log("panend",ev.center)
+            if(pinchFlag==false) {
+                panEnd = ev.center;
+                var pointsX = [parseInt(parseInt(panStart.x)/(width/x.domain().length)),parseInt(parseInt(panEnd.x)/(width/x.domain().length))]
+                var startLength = pointsX[0]-pointsX[1];
+                console.log("points",pointsX)
+                console.log("starLength=",startLength);
+                console.log("start location old",startLocation);
+                console.log(startLocation + startLength + cities[0].data.length)
+                var maxDataLength = 0,rawDataMaxLength = 0;
+                cities.forEach(function (d,i) {
+                    if(maxDataLength<d.data.length){
+                        maxDataLength = d.data.length;
+                    }
+                    if(rawDataMaxLength<rawData[i].data.length){
+                        rawDataMaxLength = rawData[i].data.length;
+                    }
+                });
+                if((startLocation + startLength)<0) {
+                    startLength = startLength - (startLength + startLocation);
+                }
+                else if((startLocation + startLength +  maxDataLength)>=rawDataMaxLength){
+                    startLength  = startLength - ( (startLocation + startLength +  maxDataLength)-rawDataMaxLength )
+                }
+                startLocation = (startLocation + startLength) < 0 ? 0 : (startLocation + startLength);
+                console.log("start location updated",startLocation);
+                cities.forEach(function (d,i) {
+                    var dataLength = (startLocation+d.data.length)<rawData[i].data.length?(startLocation+d.data.length):rawData[i].data.length;
+                    console.log("Data length",dataLength);
+                    d.data = rawData[i].data.slice(startLocation,dataLength);
+                });
+                chart.plot();
+            }
 
         });
 
@@ -323,39 +354,45 @@
             var endLength =(parseInt(parseInt(xPinch[1][1])/(width/x.domain().length))-parseInt(parseInt(xPinch[0][1])/(width/x.domain().length)));
             console.log("points to be shifted from front",startLength);
             console.log("points to be shifted from end",endLength);
-            startLocation =(startLocation + startLength)<0?0:(startLocation + startLength);
+            if((startLocation + startLength)<0) {
+                startLength = startLength - (startLength + startLocation);
+            }
+             startLocation = (startLocation + startLength) < 0 ? 0 : (startLocation + startLength);
             //starting filtering data
+            var loopingVariable = true;
             cities.forEach(function (d,i) {
-
-
-
-                //slicing each line if and only if the length of data > 50 (minimum no of ticks should be present in the graph)
+                if(loopingVariable == false)
+                        return;
+//                slicing each line if and only if the length of data > 50 (minimum no of ticks should be present in the graph)
                     if(startLength>0&&endLength>0) {
                         console.log("pure zoom in");
-                        if(d.data.length>10)
-                        d.data = d.data.splice(startLength, d.data.length - endLength);
+                        if(d.data.length>10) {
+                            d.data = d.data.splice(startLength, d.data.length - endLength);
+                        }else{
+                            console.log("no change");
+                            console.log(startLocation,startLength);
+                            startLocation  = startLocation - startLength;
+                            loopingVariable = false;
+                        }
                     }
-
-                    else if(startLength<0&&endLength<0){
-                        console.log("\n")
-                        console.log("\n")
-                        console.log("pure zoom out");
-                        console.log("Initial data length",d.data.length);
-                        console.log("start location = ",(startLocation),(startLocation)<0?0:(startLocation));
-                        console.log("end location   = ",(-startLength+d.data.length-endLength),rawData[i].data.length,(-startLength+d.data.length-endLength)>rawData[i].data.length,((-startLength+d.data.length-endLength)>rawData[i].data.length?rawData[i].data.length:(-startLength+d.data.length-endLength)));
-                        d.data = rawData[i].data.slice((startLocation)<0?0:(startLocation),(-startLength + d.data.length-endLength)>rawData[i].data.length?rawData[i].data.length:(-startLength + d.data.length-endLength));
-                        console.log("final data length",d.data.length)
-                        console.log("\n");
-                        console.log("\n");
+                    else {
+                        console.log("Pure zoom out");
+                        var dataLength = ((-startLength+d.data.length-endLength)>rawData[i].data.length?rawData[i].data.length:(-startLength+d.data.length-endLength));
+                        dataLength = (startLocation+dataLength-1)>=rawData[i].data.length?(rawData[i].data.length-startLocation-1):(dataLength-1);
+                        d.data = rawData[i].data.slice(startLocation,startLocation+dataLength);
                     }
-
-                    else if(startLength<0&&endLength<0){
-
-                    }
-
-                    else if(startLength<0&&endLength<0){
-
-                    }
+//                    else if(startLength>0&&endLength<0){
+//                        console.log("pan with zoom");
+//                        console.log("start location",startLocation,"\n" +
+//                                "start point shift",startLength,"\n" +
+//                                "end point shift",endLength,"\n" +
+//                                "current data length",d.data.length);
+//                    }else if(startLength<0&&endLength>0){
+//
+//                    }else{
+//                        console.log("else in")
+//
+//                    }
             });
             console.log("starting index in original data=",startLocation,cities[0].data[0]);
             rawData[0].data.forEach(function (d,i) {
@@ -779,7 +816,7 @@
 
 
     }
-    var obj
+    var obj;
     d3.tsv("data-1.csv", function (error, data) {
         obj={
             data:data,
