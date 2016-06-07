@@ -393,7 +393,7 @@
             d3.select(obj.divId + " > *").remove();
 
             //Adding chart and placing chart at specific locaion using translate
-            var svg = d3.select("#test")
+            var svg = d3.select(obj.divId)
                     .append("svg")
                     .attr("width", width + margin.left + margin.right)
                     .attr("height", height + margin.top + margin.bottom)
@@ -577,7 +577,7 @@
             d3.selectAll(obj.divId)
                     .on("mousedown", function (d) {
                         //remove all the rectangele created before
-                        d3.selectAll(obj.divId + "rect[class='zoom']").remove();
+                        d3.selectAll(obj.divId + " > rect[class='zoom']").remove();
                         //assign this toe,
                         var e = this,
                                 origin = d3.mouse(e),   // origin is the array containing the location of cursor from where the rectangle is created
@@ -609,7 +609,7 @@
                                 .on("mouseup.zoomRect", function (d) {  //function to run mouse is released
 
                                     //stop above event listner
-                                    d3.select('#test').on("mousemove.zoomRect", null).on("mouseup.zoomRect", null);
+                                    d3.select(obj.divId).on("mousemove.zoomRect", null).on("mouseup.zoomRect", null);
 
                                     //allow selection
                                     d3.select("body").classed("noselect", false);
@@ -619,8 +619,7 @@
                                     m[0] = Math.max(0, Math.min(width, (m[0])));
 
                                     //check that the origin location on x axis of the mouse should not be eqaul to last
-                                    if (m[0] !== origin[0] && series.length != 0) {
-
+                                    if (m[0] !== origin[0] && series[0].data.length > 20) {
 
                                         cities.forEach(function (d) {
 
@@ -635,8 +634,7 @@
                                                 });
                                             }
                                         });
-                                        zoom = false
-
+                                        zoom = false;
                                         chart.plot();
                                     }
                                     HoverFlag = true;
