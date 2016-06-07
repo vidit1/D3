@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
 
-    .axis text {
+    body {
         font: 10px sans-serif;
     }
 
@@ -14,76 +13,383 @@
         shape-rendering: crispEdges;
     }
 
-    .x.axis path {
-        display: none;
+
+    .line {
+        fill: none;
+        stroke: steelblue;
+        stroke-width: 2px;
     }
 
+    .line-hover{
+        stroke-width: 4px;
+    }
+
+    #test{
+
+    }
+
+    .legend .series {
+        cursor: pointer;
+    }
+
+    .legend circle {
+        stroke-width: 2px;
+        fill-opacity: 0;
+    }
+
+    .legend .disabled circle {
+        fill-opacity: 2;
+    }
+
+
+    div.tooltip {
+        position: absolute;
+        text-align: center;
+        width: 60px;
+        height: 28px;
+        padding: 2px;7
+    font: 12px sans-serif;
+        background: lightsteelblue;
+        border: 0px;
+        border-radius: 8px;
+        pointer-events: none;
+    }
+    rect.zoom {
+        fill: #ddd;
+
+    }
+    rect.zoom {
+        stroke: steelblue;
+        fill-opacity: 0.5;
+    }
+
+    svg *::selection {
+        background : transparent;
+    }
+
+    svg *::-moz-selection {
+        background:transparent;
+    }
+
+    svg *::-webkit-selection {
+        background:transparent;
+    }
+
+
+
+    /********************
+     * TOOLTIP CSS
+     */
+
+    .nvtooltip {
+        position: absolute;
+        background-color: rgba(255,255,255,1);
+        padding: 10px;
+        border: 1px solid #ddd;
+
+        font-family: Arial;
+        font-size: 13px;
+
+        /*transition: opacity 500ms linear;*/
+        /*-moz-transition: opacity 500ms linear;*/
+        /*-webkit-transition: opacity 500ms linear;*/
+
+        /*transition-delay: 500ms;*/
+        /*-moz-transition-delay: 500ms;*/
+        /*-webkit-transition-delay: 500ms;*/
+
+        -moz-box-shadow: 4px 4px 12px rgba(0,0,0,.5);
+        -webkit-box-shadow: 4px 4px 12px rgba(0,0,0,.5);
+        box-shadow: 4px 4px 12px rgba(0,0,0,.5);
+
+        -moz-border-radius: 15px;
+        border-radius: 15px;
+    }
+
+    .nvtooltip h3 {
+        margin: 0;
+        padding: 0;
+        text-align: center;
+    }
+
+    .nvtooltip p {
+        margin: 0;
+        padding: 0;
+
+    }
+
+    .nvtooltip span {
+        display: inline-block;
+        margin: 2px 0;
+    }
+
+    .axis text {
+        font: 10px sans-serif;
+    }
+
+    .axis line,
+    .axis path {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
+
+    /*.axis--x path {*/
+    /*display: none;*/
+    /*}*/
+
+
+
 </style>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tipsy/1.0.3/jquery.tipsy.min.css" rel="stylesheet" type="text/css">
 <body>
-<script src="//d3js.org/d3.v3.min.js"></script>
+<div id="test"></div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tipsy/1.0.3/jquery.tipsy.min.js"></script>
+<script src="bower_components/moment/min/moment.min.js"></script>
+<script src="d3.js"></script>
+<script src="d3legend.js"></script>
+<script src="tooltip.js"></script>
 <script>
 
+    var numberOfTicks = 10;
+    var parseDate = d3.time.format("%Y%m%d").parse;
+
     var n = 20, // number of samples
-            m = 4; // number of series
+            m = 6; // number of series
 
     var data = d3.range(m).map(function() { return d3.range(n).map(Math.random); });
 
-    var margin = {top: 20, right: 30, bottom: 30, left: 40},
+    var margin = {top: 20, right: 30, bottom: 60, left: 40},
             width = 960 - margin.left - margin.right,
             height = 500 - margin.top - margin.bottom;
 
     var y = d3.scale.linear()
-            .domain([0, 1])
-            .range([height, 0]);
+            .rangeRound([height, 0]);
+
 
     var x0 = d3.scale.ordinal()
-            .domain(d3.range(n))
-            .rangeBands([0, width], .2);
+            .rangeRoundBands([0, width], .2);
 
     var x1 = d3.scale.ordinal()
-            .domain(d3.range(m))
-            .rangeBands([0, x0.rangeBand()]);
-
-    var z = d3.scale.category10();
+            .rangeRoundBands([0, x0.rangeBand()],.5);
 
     var xAxis = d3.svg.axis()
             .scale(x0)
-            .orient("bottom");
+            .orient("bottom")
+            .tickFormat(d3.time.format("%Y-%m-%d"));
 
     var yAxis = d3.svg.axis()
             .scale(y)
             .orient("left");
 
-    var svg = d3.select("body").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("svg:g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    var color = d3.scale.category10();
 
-    svg.append("g")
-            .attr("class", "y axis")
-            .call(yAxis);
+    var legend= d3Legend().height(height+ margin.top + margin.bottom).width(width).margin(margin).color(color);
 
-    svg.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
+    //calling legend and setting width,height,margin,color
+    //    var legend= d3Legend().height(height+ margin.top + margin.bottom).width(width).margin(margin).color(color);
 
-    svg.append("g").selectAll("g")
-            .data(data)
-            .enter().append("g")
-            .style("fill", function(d, i) { return z(i); })
-            .attr("transform", function(d, i) { return "translate(" + x1(i) + ",0)"; })
-            .selectAll("rect")
-            .data(function(d) { return d; })
-            .enter().append("rect")
-            .attr("width", x1.rangeBand())
-            .attr("height", function (d,i) {
-                console.log(d,i)
-                return y(d)
+    d3.tsv("data-1.csv",  function(error, data) {
+
+        color.domain(d3.keys(data[0]).filter(function(key) { return key !== "date"; }));
+
+        if (error) throw error;
+        var cities =color.domain().map(function(c) {
+            return data.map(function(d) {
+                return {x: parseDate(d.date), y: +d[c]};
+            });
+        });
+
+        for(var i=0;i<cities.length;i++){
+            var obj = {};
+            obj.data = cities[i];
+            obj.label= color.domain()[i];
+            obj.hover= false;
+            obj.disabled= true;
+            cities[i]= obj
+        }
+        console.log(cities);
+
+        function update() {
+            //Empty the container before loading
+            d3.select("#test > *").remove();
+
+            var series = cities.filter(function (d) {
+                return d.disabled;
+            });
+
+
+
+            y.domain([0,
+                d3.max(series, function (c) {
+                    return d3.max(c.data, function (v) {
+                        return (v.y);
+                    });
+                })]).nice();
+
+            x0.domain(series[0].data.map(function (d) {
+                return d.x;
+            }));
+            var mult = Math.max(1, Math.floor(width / x0.domain().length));
+            x0.rangeRoundBands([0, (x0.domain().length * mult)], 0.1, 0);
+            var tickInterval = parseInt(x0.domain().length / numberOfTicks);
+
+
+            var ticks = x0.domain().filter(function (d, i) {
+                return !(i % tickInterval);
+            });
+
+            xAxis.tickValues(ticks);
+
+            x1.domain(color.domain()).rangeBands([0, x0.rangeBand()]);
+
+
+            var svg = d3.select("#test")
+                    .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("class", "chart")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            //Appending legend box
+            svg.append('g')
+                    .attr('class', 'legendWrap');
+
+            svg.append("g")
+                    .attr("class", "y axis")
+                    .call(yAxis);
+
+            svg.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(xAxis);
+
+            if(series.length==0){
+
+                return
+            }
+            svg.append("g").selectAll("g")
+                    .data(series)
+                    .enter().append("g")
+                    .style("fill", function (d, i) {
+                        return color(d.label);
+                    })
+                    .attr("transform", function (d, i) {
+                        return "translate(" + x1(d.label) + ",0)";
+                    })
+                    .selectAll("rect")
+                    .data(function (d) {
+                        return d.data;
+                    })
+                    .enter().append("rect")
+                    .attr("width", x1.rangeBand())
+                    .attr("height", function (d) {
+                        return height - y(d.y)
+                    })
+                    .attr("x", function (d, i) {
+                        return x0(d.x);
+                    })
+                    .attr("y", function (d) {
+                        return y(d.y);
+                    });
+
+
+
+            var rectangle = d3.selectAll('rect');
+
+            //mouse over function
+            rectangle.on('mouseover', function (d) {
+                nvtooltip.cleanup();
+                var cord = d3.mouse(this);
+                nvtooltip.show(
+                        [x0(d.x)+margin.left+x0.rangeBand()/2, cord[1]], '<h3>' + moment(d.x).format("YYYY-MM-DD") + '</h3>');
             })
-            .attr("x", function(d, i) { return x0(i); })
-            .attr("y", function(d) { return height - y(d); });
+                    .on('mouseout', function (d) {
+                        nvtooltip.cleanup();
+                    });
 
 
+            //            zoming function
+            d3.selectAll('#test')
+                    .on("mousedown", function (d) {
+                        //remove all the rectangele created before
+                        d3.selectAll("rect[class='zoom']").remove();
+                        //assign this toe,
+                        var e = this,
+                                origin = d3.mouse(e),   // origin is the array containing the location of cursor from where the rectangle is created
+                                rectSelected = d3.selectAll('svg').append("rect").attr("class", "zoom"); //apending the rectangle to the chart
+                        d3.select("body").classed("noselect", true);  //disable select
+                        //find the min between the width and and cursor location to prevent the rectangle move out of the chart
+                        origin[0] = Math.max(0, Math.min(width, (origin[0])));
+
+
+                        //if the mouse is down and mouse is moved than start creating the rectangle
+                        d3.selectAll('#test')
+                                .on("mousemove.zoomRect", function (d) {
+
+                                    //current location of mouse
+                                    var m = d3.mouse(e);
+                                    //find the min between the width and and cursor location to prevent the rectangle move out of the chart
+                                    m[0] = Math.max(0, Math.max(margin.left, Math.min(width + margin.left, (m[0]))));
+
+                                    //asign width and height to the rectangle
+                                    rectSelected.attr("x", Math.min(origin[0], m[0]))
+                                            .attr("y", (margin.top))
+                                            .attr("width", Math.abs(m[0] - origin[0]))
+                                            .attr("height", height);
+                                })
+                                .on("mouseup.zoomRect", function (d) {  //function to run mouse is released
+
+                                    //stop above event listner
+                                    d3.select('#test').on("mousemove.zoomRect", null).on("mouseup.zoomRect", null);
+
+                                    //allow selection
+                                    d3.select("body").classed("noselect", false);
+                                    var m = d3.mouse(e);
+
+                                    //the position where the mouse the released
+                                    m[0] = Math.max(0, Math.min(width, (m[0])));
+
+                                    //check that the origin location on x axis of the mouse should not be eqaul to last
+                                    if (m[0] !== origin[0]&&series[0].data.length>20) {
+                                        series.forEach(function (d) {
+
+                                            //slicing each line if and only if the length of data > 50 (minimum no of ticks should be present in the graph)
+                                            if (d.data.length > 10) {
+                                                d.data = d.data.filter(function (a) {
+                                                    if (m[0] < origin[0]) {
+                                                        return x0(a.x) >= m[0] && x0(a.x) <= origin[0];
+                                                    } else {
+                                                        return x0(a.x) <= m[0] && x0(a.x) >= origin[0];
+                                                    }
+                                                });
+                                            }
+                                        });
+                                        console.log("trimmed data = ",series)
+                                        update();
+                                    }
+                                    rectSelected.remove();
+
+                                }, true);
+                        d3.event.stopPropagation();
+                    });
+
+
+
+            //legend location
+            svg.select('.legendWrap').datum(cities)
+                    .attr('transform', 'translate(' + 0 + ',' + 0 + ')')
+                    .call(legend);
+
+
+            //on legend click toggle line
+            legend.dispatch.on('legendClick', function (d) {
+                d.disabled = !d.disabled;
+                update();
+            });
+        }
+        update();
+    })  ;
 </script>
