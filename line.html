@@ -156,18 +156,6 @@
 <script src="d3legend.js"></script>
 <script src="tooltip.js"></script>
 <script>
-
-    //TODO 1. Handling no data  (done)
-    //TODO 2. All the legends are unchecked display no data to display (done)
-    //TODO 3. Error handling in D3 (done)
-    //TODO 4. Mobile view pan functionality
-    //TODO 5. Mobile view pinch functionality for zooming
-    //TODO 6. While zooming through selection add additional data to the zoomed area
-    //TODO 6.1 Zoom action (-->   <--) zoom in(done)
-    //TODO 6.1 Zoom action (<--   -->) zoom out(done)
-    //TODO 6.1 Zoom action (-->   -->) zoom in/out with left panning
-    //TODO 6.1 Zoom action (<--   <--) zoom in/out with right panning
-    //TODO 7. Styling for mobile view(font-size of heading, ticks and axis label increase)
     function d3Line(obj) {
 
         var chart = {};
@@ -381,18 +369,6 @@
                         dataLength = (startLocation+dataLength-1)>=rawData[i].data.length?(rawData[i].data.length-startLocation-1):(dataLength-1);
                         d.data = rawData[i].data.slice(startLocation,startLocation+dataLength);
                     }
-//                    else if(startLength>0&&endLength<0){
-//                        console.log("pan with zoom");
-//                        console.log("start location",startLocation,"\n" +
-//                                "start point shift",startLength,"\n" +
-//                                "end point shift",endLength,"\n" +
-//                                "current data length",d.data.length);
-//                    }else if(startLength<0&&endLength>0){
-//
-//                    }else{
-//                        console.log("else in")
-//
-//                    }
             });
             console.log("starting index in original data=",startLocation,cities[0].data[0]);
             rawData[0].data.forEach(function (d,i) {
