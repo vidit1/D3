@@ -631,7 +631,11 @@
                         .attr('r', 6)
                         .style('visibility', mouseMoveHide);
                 var data = hover.data();
-                nvtooltip.show([cord[0], cord[1]], '<h3>' + moment(data[0].date).format("YYYY-MM-DD") + '</h3>');
+                var legends = series.map(function (d) {
+                    return d.label;
+                })
+                console.log(legends)
+                nvtooltip.show([cord[0], cord[1]], obj.tooltip.formatter(data,legends));
 
             })
                     .on('mouseout', function () {
@@ -766,7 +770,6 @@
 
         };
 
-        chart.plot();
 
 
         window.addEventListener('resize', function () {
@@ -787,7 +790,7 @@
                 chart.plot();
             }
         };
-
+        console.log(Object.keys(chart).length);
         return chart;
 
 
@@ -803,10 +806,23 @@
             },
             yAxis:{
                 label:"Number"
+            },
+            tooltip:{
+                formatter:function(data,legends){
+                    return '<h3>' + moment(data[0].date).format("YYYY-MM-DD") + '</h3>'
+                }
+            },
+            export:{
+                onClick : function () {
+
+                }
             }
         };
         var chart = d3Line(obj);
-        console.log(chart)
+        console.log(chart);
+        setTimeout(function(){
+            chart.plot()
+        },2000)
     })
 
 </script>
