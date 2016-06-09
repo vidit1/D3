@@ -1,395 +1,273 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
-
     body {
-        font: 10px sans-serif;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        width: 960px;
+        height: 500px;
+        position: relative;
     }
 
-    .axis path,
-    .axis line {
-        fill: none;
-        stroke: #000;
-        shape-rendering: crispEdges;
+    svg {
+        width: 100%;
+        height: 100%;
     }
 
+    path.slice{
+        stroke-width:2px;
+    }
 
-    .line {
-        fill: none;
-        stroke: steelblue;
+    polyline{
+        opacity: .3;
+        stroke: black;
         stroke-width: 2px;
-    }
-
-    .line-hover{
-        stroke-width: 4px;
-    }
-
-    #test{
-
-    }
-
-    .legend .series {
-        cursor: pointer;
-    }
-
-    .legend circle {
-        stroke-width: 2px;
-        fill-opacity: 0;
-    }
-
-    .legend .disabled circle {
-        fill-opacity: 2;
-    }
-
-
-    div.tooltip {
-        position: absolute;
-        text-align: center;
-        width: 60px;
-        height: 28px;
-        padding: 2px;7
-    font: 12px sans-serif;
-        background: lightsteelblue;
-        border: 0px;
-        border-radius: 8px;
-        pointer-events: none;
-    }
-    rect.zoom {
-        fill: #ddd;
-
-    }
-    rect.zoom {
-        stroke: steelblue;
-        fill-opacity: 0.5;
-    }
-
-    svg *::selection {
-        background : transparent;
-    }
-
-    svg *::-moz-selection {
-        background:transparent;
-    }
-
-    svg *::-webkit-selection {
-        background:transparent;
-    }
-
-
-
-    /********************
-     * TOOLTIP CSS
-     */
-
-    .nvtooltip {
-        position: absolute;
-        background-color: rgba(255,255,255,1);
-        padding: 10px;
-        border: 1px solid #ddd;
-
-        font-family: Arial;
-        font-size: 13px;
-
-        /*transition: opacity 500ms linear;*/
-        /*-moz-transition: opacity 500ms linear;*/
-        /*-webkit-transition: opacity 500ms linear;*/
-
-        /*transition-delay: 500ms;*/
-        /*-moz-transition-delay: 500ms;*/
-        /*-webkit-transition-delay: 500ms;*/
-
-        -moz-box-shadow: 4px 4px 12px rgba(0,0,0,.5);
-        -webkit-box-shadow: 4px 4px 12px rgba(0,0,0,.5);
-        box-shadow: 4px 4px 12px rgba(0,0,0,.5);
-
-        -moz-border-radius: 15px;
-        border-radius: 15px;
-    }
-
-    .nvtooltip h3 {
-        margin: 0;
-        padding: 0;
-        text-align: center;
-    }
-
-    .nvtooltip p {
-        margin: 0;
-        padding: 0;
-
-    }
-
-    .nvtooltip span {
-        display: inline-block;
-        margin: 2px 0;
-    }
-
-    .axis text {
-        font: 10px sans-serif;
-    }
-
-    .axis line,
-    .axis path {
         fill: none;
-        stroke: #000;
-        shape-rendering: crispEdges;
+    }
+    .arc text {
+        font: 10px sans-serif;
+        text-anchor: middle;
     }
 
-    /*.axis--x path {*/
-    /*display: none;*/
-    /*}*/
-
-
+    .arc path {
+        stroke: #fff;
+    }
 
 </style>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tipsy/1.0.3/jquery.tipsy.min.css" rel="stylesheet" type="text/css">
 <body>
-<div id="test"></div>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tipsy/1.0.3/jquery.tipsy.min.js"></script>
-<script src="../bower_components/moment/min/moment.min.js"></script>
-<script src="../d3.js"></script>
-<script src="../d3legend.js"></script>
-<script src="../tooltip.js"></script>
+<script src="//d3js.org/d3.v3.min.js"></script>
 <script>
 
-    var numberOfTicks = 10;
-    var parseDate = d3.time.format("%Y%m%d").parse;
+    var width = 960,
+            height = 500,
+            radius = Math.min(width, height) / 2;
 
-    var n = 20, // number of samples
-            m = 6; // number of series
+    var color = d3.scale.ordinal()
+            .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
 
-    var data = d3.range(m).map(function() { return d3.range(n).map(Math.random); });
+    var arc = d3.svg.arc()
+            .outerRadius(radius - 10)
+            .innerRadius(0);
 
-    var margin = {top: 20, right: 30, bottom: 60, left: 40},
-            width = 960 - margin.left - margin.right,
-            height = 500 - margin.top - margin.bottom;
+    var labelArc = d3.svg.arc()
+            .outerRadius(radius - 40)
+            .innerRadius(radius - 40);
 
-    var y = d3.scale.linear()
-            .rangeRound([height, 0]);
+    var pie = d3.layout.pie()
+            .sort(null)
+            .value(function(d) { return d.value; });
 
+    var svg = d3.select("body").append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
-    var x0 = d3.scale.ordinal()
-            .rangeRoundBands([0, width], .2);
-
-    var x1 = d3.scale.ordinal()
-            .rangeRoundBands([0, x0.rangeBand()],.5);
-
-    var xAxis = d3.svg.axis()
-            .scale(x0)
-            .orient("bottom")
-            .tickFormat(d3.time.format("%Y-%m-%d"));
-
-    var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("left");
-
-    var color = d3.scale.category10();
-
-    var legend= d3Legend().height(height+ margin.top + margin.bottom).width(width).margin(margin).color(color);
-
-    //calling legend and setting width,height,margin,color
-    //    var legend= d3Legend().height(height+ margin.top + margin.bottom).width(width).margin(margin).color(color);
-
-    d3.tsv("../data-1.csv",  function(error, data) {
-
-        color.domain(d3.keys(data[0]).filter(function(key) { return key !== "date"; }));
-
+    d3.csv("../pie-data.csv", type, function(error, data) {
         if (error) throw error;
-        var cities =color.domain().map(function(c) {
-            return data.map(function(d) {
-                return {x: parseDate(d.date), y: +d[c]};
-            });
+        data = [
+            {
+                "value": 2,
+                "label": 239,
+                "disabled":true
+            },
+            {
+                "value": 5,
+                "label": 238,
+                "disabled":true
+            },
+            {
+                "value": 6,
+                "label": 837,
+                "disabled":true
+            },
+            {
+
+                "value": 364,
+                "label": 236,
+                "disabled":true
+            },
+            {
+                "value": 1,
+                "label": 235,
+                "disabled":true
+            },
+            {
+
+                "value": 24,
+                "label": 234,
+                "disabled":true
+            },
+            {
+                "value": 465,
+                "label": 233,
+                "disabled":false
+            },
+            {
+
+                "value": 10,
+                "label": 232,
+                "disabled":true
+            },
+            {
+                "value": 3,
+                "label": 231,
+                "disabled":true
+            },
+            {
+
+                "value": 30,
+                "label": 230,
+                "disabled":true
+            },
+            {
+                "value": 1,
+                "label": 227,
+                "disabled":true
+            },
+            {
+
+                "value": 5,
+                "label": 226,
+                "disabled":true
+            },
+            {
+                "value": 2,
+                "label": 224,
+                "disabled":true
+            },
+            {
+
+                "value": 1,
+                "label": 223,
+                "disabled":true
+            },
+            {
+                "value": 3,
+                "label": 218,
+                "disabled":true
+            }
+        ];
+
+
+        data.map(function (d) {
+            d.label = "version "+d.label;
+        })
+
+        var a = data.filter(function (d) {
+            return d.disabled;
         });
 
-        for(var i=0;i<cities.length;i++){
-            var obj = {};   
-            obj.data = cities[i];
-            obj.label= color.domain()[i];
-            obj.hover= false;
-            obj.disabled= true;
-            cities[i]= obj
+        data = a
+
+        function pointIsInArc(pt, ptData, d3Arc) {
+            // Center of the arc is assumed to be 0,0
+            // (pt.x, pt.y) are assumed to be relative to the center
+            var r1 = arc.innerRadius()(ptData),
+                    r2 = arc.outerRadius()(ptData),
+                    theta1 = arc.startAngle()(ptData),
+                    theta2 = arc.endAngle()(ptData);
+
+            var dist = pt.x * pt.x + pt.y * pt.y,
+                    angle = Math.atan2(pt.x, -pt.y);
+
+            angle = (angle < 0) ? (angle + Math.PI * 2) : angle;
+
+            return (r1 * r1 <= dist) && (dist <= r2 * r2) &&
+                    (theta1 <= angle) && (angle <= theta2);
         }
-        console.log(cities);
 
-        function update() {
-            //Empty the container before loading
-            d3.select("#test > *").remove();
-
-            var series = cities.filter(function (d) {
-                return d.disabled;
-            });
+        var getAngle = function (d) {
+            var ang = (180 / Math.PI * (d.startAngle + d.endAngle) / 2 - 90);
+            return (ang > 180) ? 180 - ang : ang;
+        };
 
 
+        var g = svg.selectAll(".arc")
+                .data(pie(data))
+                .enter().append("g")
+                .attr("class", "arc");
 
-            y.domain([0,
-                d3.max(series, function (c) {
-                    return d3.max(c.data, function (v) {
-                        return (v.y);
-                    });
-                })]).nice();
+        g.append("path")
+                .attr("d", arc)
+                .style("fill", function(d) { return color(d.data.label); });
 
-            x0.domain(series[0].data.map(function (d) {
-                return d.x;
-            }));
-            var mult = Math.max(1, Math.floor(width / x0.domain().length));
-            x0.rangeRoundBands([0, (x0.domain().length * mult)], 0.1, 0);
-            var tickInterval = parseInt(x0.domain().length / numberOfTicks);
+        svg.append("g")
+                .attr("class", "labels");
 
+        var text = svg.select(".labels").selectAll("text")
+                .data(pie(data), function(d) {
+                    console.log(d)
+                    return d.data.label;
+                });
 
-            var ticks = x0.domain().filter(function (d, i) {
-                return !(i % tickInterval);
-            });
-
-            xAxis.tickValues(ticks);
-
-            x1.domain(color.domain()).rangeBands([0, x0.rangeBand()]);
-
-
-            var svg = d3.select("#test")
-                    .append("svg")
-                    .attr("width", width + margin.left + margin.right)
-                    .attr("height", height + margin.top + margin.bottom)
-                    .append("g")
-                    .attr("class", "chart")
-                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-            //Appending legend box
-            svg.append('g')
-                    .attr('class', 'legendWrap');
-
-            svg.append("g")
-                    .attr("class", "y axis")
-                    .call(yAxis);
-
-            svg.append("g")
-                    .attr("class", "x axis")
-                    .attr("transform", "translate(0," + height + ")")
-                    .call(xAxis);
-
-            if(series.length==0){
-
-                return
-            }
-            svg.append("g").selectAll("g")
-                    .data(series)
-                    .enter().append("g")
-                    .style("fill", function (d, i) {
-                        return color(d.label);
-                    })
-                    .attr("transform", function (d, i) {
-                        return "translate(" + x1(d.label) + ",0)";
-                    })
-                    .selectAll("rect")
-                    .data(function (d) {
-                        return d.data;
-                    })
-                    .enter().append("rect")
-                    .attr("width", x1.rangeBand())
-                    .attr("height", function (d) {
-                        return height - y(d.y)
-                    })
-                    .attr("x", function (d, i) {
-                        return x0(d.x);
-                    })
-                    .attr("y", function (d) {
-                        return y(d.y);
-                    });
-
-
-
-            var rectangle = d3.selectAll('rect');
-
-            //mouse over function
-            rectangle.on('mouseover', function (d) {
-                        nvtooltip.cleanup();
-                        var cord = d3.mouse(this);
-                        nvtooltip.show(
-                                [x0(d.x)+margin.left+x0.rangeBand()/2, cord[1]], '<h3>' + moment(d.x).format("YYYY-MM-DD") + '</h3>');
-                    })
-                    .on('mouseout', function (d) {
-                        nvtooltip.cleanup();
-                    });
-
-
-            //            zoming function
-            d3.selectAll('#test')
-                    .on("mousedown", function (d) {
-                        //remove all the rectangele created before
-                        d3.selectAll("rect[class='zoom']").remove();
-                        //assign this toe,
-                        var e = this,
-                                origin = d3.mouse(e),   // origin is the array containing the location of cursor from where the rectangle is created
-                                rectSelected = d3.selectAll('svg').append("rect").attr("class", "zoom"); //apending the rectangle to the chart
-                        d3.select("body").classed("noselect", true);  //disable select
-                        //find the min between the width and and cursor location to prevent the rectangle move out of the chart
-                        origin[0] = Math.max(0, Math.min(width, (origin[0])));
-
-
-                        //if the mouse is down and mouse is moved than start creating the rectangle
-                        d3.selectAll('#test')
-                                .on("mousemove.zoomRect", function (d) {
-
-                                    //current location of mouse
-                                    var m = d3.mouse(e);
-                                    //find the min between the width and and cursor location to prevent the rectangle move out of the chart
-                                    m[0] = Math.max(0, Math.max(margin.left, Math.min(width + margin.left, (m[0]))));
-
-                                    //asign width and height to the rectangle
-                                    rectSelected.attr("x", Math.min(origin[0], m[0]))
-                                            .attr("y", (margin.top))
-                                            .attr("width", Math.abs(m[0] - origin[0]))
-                                            .attr("height", height);
-                                })
-                                .on("mouseup.zoomRect", function (d) {  //function to run mouse is released
-
-                                    //stop above event listner
-                                    d3.select('#test').on("mousemove.zoomRect", null).on("mouseup.zoomRect", null);
-
-                                    //allow selection
-                                    d3.select("body").classed("noselect", false);
-                                    var m = d3.mouse(e);
-
-                                    //the position where the mouse the released
-                                    m[0] = Math.max(0, Math.min(width, (m[0])));
-
-                                    //check that the origin location on x axis of the mouse should not be eqaul to last
-                                    if (m[0] !== origin[0]&&series[0].data.length>20) {
-                                        series.forEach(function (d) {
-
-                                            //slicing each line if and only if the length of data > 50 (minimum no of ticks should be present in the graph)
-                                            if (d.data.length > 10) {
-                                                d.data = d.data.filter(function (a) {
-                                                    if (m[0] < origin[0]) {
-                                                        return x0(a.x) >= m[0] && x0(a.x) <= origin[0];
-                                                    } else {
-                                                        return x0(a.x) <= m[0] && x0(a.x) >= origin[0];
-                                                    }
-                                                });
-                                            }
-                                        });
-                                        console.log("trimmed data = ",series)
-                                        update();
-                                    }
-                                    rectSelected.remove();
-
-                                }, true);
-                        d3.event.stopPropagation();
-                    });
-
-
-
-            //legend location
-            svg.select('.legendWrap').datum(cities)
-                    .attr('transform', 'translate(' + 0 + ',' + 0 + ')')
-                    .call(legend);
-
-
-            //on legend click toggle line
-            legend.dispatch.on('legendClick', function (d) {
-                d.disabled = !d.disabled;
-                update();
-            });
+        function midAngle(d){
+            return d.startAngle + (d.endAngle - d.startAngle)/2;
         }
-        update();
-    })  ;
+        text.enter()
+                .append("text")
+                .attr("dy", ".35em")
+                .text(function(d) {
+                    return d.data.label;
+                });
+
+        text.transition().duration(1000)
+                .attrTween("transform", function(d) {
+                    this._current = this._current || d;
+                    var interpolate = d3.interpolate(this._current, d);
+                    this._current = interpolate(0);
+                    return function(t) {
+                        var d2 = interpolate(t);
+                        var pos = labelArc.centroid(d2);
+                        pos[0] = radius * (midAngle(d2) < Math.PI ? 1 : -1);
+                        return "translate("+ pos +")";
+                    };
+                })
+                .styleTween("text-anchor", function(d){
+                    this._current = this._current || d;
+                    var interpolate = d3.interpolate(this._current, d);
+                    this._current = interpolate(0);
+                    return function(t) {
+                        var d2 = interpolate(t);
+                        return midAngle(d2) < Math.PI ? "start":"end";
+                    };
+                });
+
+        text.exit()
+                .remove();
+
+        svg.append("g")
+                .attr("class", "lines");
+
+        var polyline = svg.select(".lines").selectAll("polyline")
+                .data(pie(data), function(d) {
+                    return d.data.label;
+                });
+
+        polyline.enter()
+                .append("polyline");
+
+        polyline.transition().duration(1000)
+                .attrTween("points", function(d){
+                    this._current = this._current || d;
+                    var interpolate = d3.interpolate(this._current, d);
+                    this._current = interpolate(0);
+                    return function(t) {
+                        var d2 = interpolate(t);
+                        var pos = labelArc.centroid(d2);
+                        pos[0] = radius * 0.95 * (midAngle(d2) < Math.PI ? 1 : -1);
+
+//                        pos[1] = parseFloat(postions[pos[1]])?parseFloat(postions[pos[1]]):pos[1];
+                        return [arc.centroid(d2), labelArc.centroid(d2), pos];
+                    };
+                });
+
+        polyline.exit()
+                .remove();
+    });
+
+    function type(d) {
+        d.value = +d.value;
+        return d;
+    }
+
 </script>
