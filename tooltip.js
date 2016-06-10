@@ -5,7 +5,7 @@
 
   var nvtooltip = window.nvtooltip = {};
 
-  nvtooltip.show = function(pos, content, gravity, dist) {
+  nvtooltip.show = function(div,pos, content, gravity, dist) {
     var container = $('<div class="nvtooltip">');
 
     gravity = gravity || 's';
@@ -14,7 +14,7 @@
     container
       .html(content)
       .css({left: -1000, top: -1000, opacity: 0})
-      .appendTo('body');
+      .appendTo(div);
 
     var height = container.height() + parseInt(container.css('padding-top'))  + parseInt(container.css('padding-bottom')),
       width = container.width() + parseInt(container.css('padding-left'))  + parseInt(container.css('padding-right')),
@@ -29,15 +29,15 @@
       case 'e':
       case 'w':
       case 'n':
-        left = pos[0] - (width / 2);
-        top = pos[1] + dist;
+        left = pos[0] - (width / 2) + $(div).offset().left;
+        top = pos[1] + dist +$(div).offset().top;
         if (left < 0) left = 5;
         if (left + width > windowWidth) left = windowWidth - width - 5;
         if (scrollTop + windowHeight < top + height) top = pos[1] - height - dist;
         break;
       case 's':
-        left = pos[0] - (width / 2);
-        top = pos[1] - height - dist;
+        left = pos[0] - (width / 2)+ $(div).offset().left;
+        top = pos[1] - height - dist+$(div).offset().top;
         if (left < 0) left = 5;
         if (left + width > windowWidth) left = windowWidth - width - 5;
         if (scrollTop > top) top = pos[1] + dist;

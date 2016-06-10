@@ -75,9 +75,8 @@
         pointer-events: none;
     }
 
-    rect {
+    rect.zoom {
         fill: #8c97b4;
-
     }
 
     rect.zoom {
@@ -156,7 +155,7 @@
 <script src="d3legend.js"></script>
 <script src="tooltip.js"></script>
 <script>
-    function d3Line(obj) {
+    function d3Scattered(obj) {
 
         var chart = {};
 
@@ -609,7 +608,7 @@
                         .attr('r', 6)
                         .style('visibility', mouseMoveHide);
                 var data = hover.data();
-                nvtooltip.show([cord[0], cord[1]], '<h3>' + moment(data[0].date).format("YYYY-MM-DD") + '</h3>');
+                nvtooltip.show(obj.divId,[cord[0], cord[1]], '<h3>' + moment(data[0].date).format("YYYY-MM-DD") + '</h3>');
 
             })
                     .on('mouseout', function () {
@@ -625,7 +624,7 @@
 
 
                         //remove all the rectangele created before
-                        d3.selectAll(obj.divId+" > rect").remove();
+                        d3.selectAll(obj.divId+" > rect[class='zoom']").remove();
 
                         //assign this toe,
                         var e = this,

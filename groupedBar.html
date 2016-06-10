@@ -557,7 +557,7 @@
                         if (cord[1] <  2*margin.top || cord[1] > height || series.length == 0 || series[0].data.length == 0) {
                             return
                         }
-                        nvtooltip.show(
+                        nvtooltip.show(obj.divId,
                                 [x0(d.x) + margin.left + x0.rangeBand() / 2, cord[1]], '<h3>' + moment(d.x).format("YYYY-MM-DD") + '</h3>');
                     })
                     .on('mouseout', function (d) {
