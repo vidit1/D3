@@ -15,13 +15,7 @@
     <script src="hammer.js"></script>
     <script src="bower_components/moment/min/moment.min.js"></script>
     <script src="d3.js"></script>
-    <script src="d3legend.js"></script>
-    <script src="tooltip.js"></script>
-    <script src="chartTypes/area.js"></script>
-    <script src="chartTypes/line.js"></script>
-    <script src="chartTypes/groupedBar.js"></script>
-    <script src="chartTypes/stacked.js"></script>
-    <script src="chartTypes/scattered.js"></script>
+    <script src="d3Chart.js"></script>
 </head>
 <body>
 <div id="test1"></div>
@@ -41,6 +35,7 @@
             data:data,
             divId:"#test1",
             title:"Test Graph",
+            type:'line',
             xAxis:{
                 label:"Date"
             },
@@ -62,6 +57,7 @@
             data:data,
             divId:"#test2",
             title:"Test Graph",
+            type:'area',
             xAxis:{
                 label:"Date"
             },
@@ -83,6 +79,7 @@
             data:data,
             divId:"#test3",
             title:"Test Graph",
+            type:'stacked',
             xAxis:{
                 label:"Date"
             },
@@ -104,6 +101,7 @@
             data:data,
             divId:"#test4",
             title:"Test Graph",
+            type:'scattered',
             xAxis:{
                 label:"Date"
             },
@@ -125,6 +123,7 @@
             data:data,
             divId:"#test5",
             title:"Test Graph",
+            type:'bar',
             xAxis:{
                 label:"Date"
             },
@@ -142,11 +141,11 @@
                 }
             }
         };
-        var chart1 = d3Line(obj1);
-        var chart2 = d3Area(obj2);
-        var chart3 = d3Stacked(obj3);
-        var chart4 = d3GroupedBar(obj4);
-        var chart5 = d3Scattered(obj5);
+        var chart1 = d3Chart(obj1);
+        var chart2 = d3Chart(obj2);
+        var chart3 = d3Chart(obj3);
+        var chart4 = d3Chart(obj4);
+        var chart5 = d3Chart(obj5);
     })
 </script>
 </body>
