@@ -230,12 +230,12 @@ function d3Area(obj) {
                 }
             });
             console.log("starting index in original data=", startLocation, cities[0].data[0]);
-            rawData[0].data.forEach(function (d, i) {
-                if (moment(d.date).format("YYYY-MM-DD") == moment(cities[0].data[0].date).format("YYYY-MM-DD")) {
-                    console.log("checking data", i);
-                    return;
-                }
-            });
+            // rawData[0].data.forEach(function (d, i) {
+            //     if (moment(d.date).format("YYYY-MM-DD") == moment(cities[0].data[0].date).format("YYYY-MM-DD")) {
+            //         console.log("checking data", i);
+            //         return;
+            //     }
+            // });
             chart.plot();
 
             setTimeout(function () {
@@ -246,12 +246,12 @@ function d3Area(obj) {
 
     }
 
-
+    
     //Update function to create chart
     chart.plot = function () {
         //Empty the container before loading
 
-        d3.select(obj.divId+" > *").remove();
+        d3.selectAll(obj.divId+" > *").remove();
 
 
         //Adding chart and placing chart at specific locaion using translate
@@ -301,7 +301,7 @@ function d3Area(obj) {
             .style("stroke","#666666")
             .style("stroke-width","1px");
 
-        d3.select(".resetZoom") //Adding reset zoom text to the reset zoom rectangle
+        d3.select(obj.divId+" > svg > g > g[class='resetZoom']") //Adding reset zoom text to the reset zoom rectangle
             .append("text")
             .attr("x",10+40)
             .attr("y",10+6)
@@ -311,7 +311,7 @@ function d3Area(obj) {
 
 
         //Click on reset zoom function
-        d3.select(".resetZoom").on("mousedown",function () {
+        d3.select(obj.divId+" > svg > g > g[class='resetZoom']").on("mousedown",function () {
             console.log("reset triggered");
             cities.forEach(function (d,i) {
                 d.data = rawData[i].data;
@@ -459,7 +459,7 @@ function d3Area(obj) {
 
             }
 
-            if (cord[1] < margin.top || cord[1] > height || series.length==0 || series[0].data.length==0) {
+            if (cord[1] < 2*margin.top || cord[1] > height || series.length==0 || series[0].data.length==0) {
                 return
             }
 
@@ -471,7 +471,7 @@ function d3Area(obj) {
                 if (flag) {
                     xpos++
                 } else {
-                    xpos--
+                    xpos--;
                     if(xpos<0)
                     {
                         break;
@@ -522,7 +522,7 @@ function d3Area(obj) {
                 origin[0] = Math.max(0, Math.min(width, (origin[0] - margin.left)));
                 HoverFlag = false;
 
-                if (origin[1] < margin.top || origin[1] > height|| series.length==0) {
+                if (origin[1] < 2*margin.top || origin[1] > height|| series.length==0) {
                     HoverFlag = true;
                     return
                 }

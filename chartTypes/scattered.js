@@ -212,12 +212,12 @@ function d3Scattered(obj) {
                 }
             });
             console.log("starting index in original data=", startLocation, cities[0].data[0]);
-            rawData[0].data.forEach(function (d, i) {
-                if (moment(d.date).format("YYYY-MM-DD") == moment(cities[0].data[0].date).format("YYYY-MM-DD")) {
-                    console.log("checking data", i);
-                    return;
-                }
-            });
+            // rawData[0].data.forEach(function (d, i) {
+            //     if (moment(d.date).format("YYYY-MM-DD") == moment(cities[0].data[0].date).format("YYYY-MM-DD")) {
+            //         console.log("checking data", i);
+            //         return;
+            //     }
+            // });
             chart.plot();
 
             setTimeout(function () {
@@ -232,8 +232,9 @@ function d3Scattered(obj) {
 
     //chart function to create chart
     chart.plot =function () {
+        
         //Empty the container before loading
-        d3.select(obj.divId+" > *").remove();
+        d3.selectAll(obj.divId+" > *").remove();
 
 
         //Adding chart and placing chart at specific locaion using translate
@@ -284,7 +285,7 @@ function d3Scattered(obj) {
             .style("stroke","#666666")
             .style("stroke-width","1px");
 
-        d3.select(".resetZoom") //Adding reset zoom text to the reset zoom rectangle
+        d3.select(obj.divId+" > svg > g > g[class='resetZoom']") //Adding reset zoom text to the reset zoom rectangle
             .append("text")
             .attr("x",10+40)
             .attr("y",10+6)
@@ -293,7 +294,7 @@ function d3Scattered(obj) {
             .text("Reset Zoom");
 
         //Click on reset zoom function
-        d3.select(".resetZoom").on("mousedown",function () {
+        d3.select(obj.divId+" > svg > g > g[class='resetZoom']").on("mousedown",function () {
             console.log("reset triggered");
             cities.forEach(function (d,i) {
                 d.data = rawData[i].data;
@@ -348,7 +349,6 @@ function d3Scattered(obj) {
             return !(i % tickInterval);
         });
 
-        console.log(ticks.length);
 
         xAxis.tickValues(ticks);
         yAxis.innerTickSize(-width);
@@ -423,7 +423,7 @@ function d3Scattered(obj) {
 
             }
 
-            if (cord[1] < margin.top || cord[1] > height || series.length==0 || series[0].data.length==0) {
+            if (cord[1] < 2*margin.top || cord[1] > height || series.length==0 || series[0].data.length==0) {
                 return
             }
 

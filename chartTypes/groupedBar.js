@@ -64,14 +64,12 @@ function d3GroupedBar(obj) {
         cityCopyObj.disabled = true;
         cities[i] = cityCopyObj
     }
-    console.log(cities);
 
     var rawData = JSON.parse(JSON.stringify(cities))
     var series, dataLength, zoom = true;
 
 
     //HammerJs functionality added
-    console.log(obj.divId, obj)
     var div = document.getElementById(obj.divId.indexOf("#") == -1 ? obj.divId : obj.divId.replace("#", ""));
 
     var mc = new Hammer.Manager(div);
@@ -200,11 +198,11 @@ function d3GroupedBar(obj) {
                 }
             });
             console.log("starting index in original data=", startLocation, cities[0].data[0]);
-            rawData[0].data.forEach(function (d, i) {
-                if (moment(d.date).format("YYYY-MM-DD") == moment(cities[0].data[0].date).format("YYYY-MM-DD")) {
-                    console.log("checking data", i);
-                }
-            });
+            // rawData[0].data.forEach(function (d, i) {
+            //     if (moment(d.date).format("YYYY-MM-DD") == moment(cities[0].data[0].date).format("YYYY-MM-DD")) {
+            //         console.log("checking data", i);
+            //     }
+            // });
             chart.plot();
 
             setTimeout(function () {
@@ -218,7 +216,7 @@ function d3GroupedBar(obj) {
 
 
         //Empty the container before loading
-        d3.select(obj.divId+" > *").remove();
+        d3.selectAll(obj.divId+" > *").remove();
 
 
         var svg = d3.select(obj.divId)
@@ -266,7 +264,7 @@ function d3GroupedBar(obj) {
             .style("stroke", "#666666")
             .style("stroke-width", "1px");
 
-        d3.select(".resetZoom") //Adding reset zoom text to the reset zoom rectangle
+        d3.select(obj.divId+" > svg > g > g[class='resetZoom']") //Adding reset zoom text to the reset zoom rectangle
             .append("text")
             .attr("x", 10 + 40)
             .attr("y", 10 + 6)
@@ -276,7 +274,7 @@ function d3GroupedBar(obj) {
 
 
         //Click on reset zoom function
-        d3.select(".resetZoom").on("mousedown", function () {
+        d3.select(obj.divId+" > svg > g > g[class='resetZoom']").on("mousedown", function () {
             console.log("reset triggered");
             cities.forEach(function (d, i) {
                 d.data = rawData[i].data;
@@ -375,8 +373,7 @@ function d3GroupedBar(obj) {
                 return y(d.y);
             });
 
-
-        var rectangle = d3.selectAll('rect');
+        var rectangle = svg.selectAll('rect')
 
         //mouse over function
         rectangle
@@ -386,15 +383,14 @@ function d3GroupedBar(obj) {
                 if (cord[1] <  2*margin.top || cord[1] > height || series.length == 0 || series[0].data.length == 0) {
                     return
                 }
-                nvtooltip.show(obj.divId,
-                    [x0(d.x) + margin.left + x0.rangeBand() / 2, cord[1]], '<h3>' + moment(d.x).format("YYYY-MM-DD") + '</h3>');
+                nvtooltip.show(obj.divId,[x0(d.x) + margin.left + x0.rangeBand() / 2, cord[1]], '<h3>' + moment(d.x).format("YYYY-MM-DD") + '</h3>');
             })
             .on('mouseout', function (d) {
                 nvtooltip.cleanup();
             });
 
 
-        //            zoming function
+        //zoming function
         d3.selectAll(obj.divId)
             .on("mousedown", function (d) {
                 //remove all the rectangele created before
@@ -408,7 +404,7 @@ function d3GroupedBar(obj) {
                 origin[0] = Math.max(0, Math.min(width, (origin[0])));
                 HoverFlag = false;
 
-                if (origin[1] < margin.top || origin[1] > height || series.length == 0) {
+                if (origin[1] < 2 * margin.top  || origin[1] > height || series.length == 0) {
                     HoverFlag = true;
                     return
                 }

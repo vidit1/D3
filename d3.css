@@ -150,6 +150,10 @@ svg *::-webkit-selection {
     shape-rendering: crispEdges;
 }
 
+.resetZoom{
+    cursor: pointer;
+}
+
 /*.axis--x path {*/
 /*display: none;*/
 /*}*/
