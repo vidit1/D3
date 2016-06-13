@@ -45,7 +45,7 @@ function d3Area(obj) {
             return x(d.date);
         })
         .y(function (d) {
-            return y(d.temperature);
+            return y(d.y);
         });
 
 
@@ -59,7 +59,7 @@ function d3Area(obj) {
             return x(d.date)
         })
         .y(function (d) {
-            return d.temperature;
+            return d.y;
         });
 
     var area = d3.svg.area()
@@ -92,7 +92,7 @@ function d3Area(obj) {
         return {
             label: name,
             data: data.map(function (d) {
-                return {date: d.date, temperature: +d[name]};
+                return {date: d.date, y: +d[name]};
             }),
             hover: false,
             disabled: true

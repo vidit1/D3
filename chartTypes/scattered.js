@@ -46,7 +46,7 @@ function d3Scattered(obj) {
             return x(d.date);
         })
         .y(function (d) {
-            return y(d.temperature);
+            return y(d.y);
         });
 
 
@@ -68,7 +68,7 @@ function d3Scattered(obj) {
         return {
             label: name,
             data: data.map(function (d) {
-                return {date: d.date, temperature: +d[name]};
+                return {date: d.date, y: +d[name]};
             }),
             hover: false,
             disabled: true
@@ -333,12 +333,12 @@ function d3Scattered(obj) {
         y.domain([
             d3.min(series, function (c) {
                 return d3.min(c.data, function (v) {
-                    return v.temperature;
+                    return v.y;
                 });
             }) - 4,
             d3.max(series, function (c) {
                 return d3.max(c.data, function (v) {
-                    return v.temperature;
+                    return v.y;
                 });
             }) + 5
         ]);
@@ -404,7 +404,7 @@ function d3Scattered(obj) {
                     return x(d.date);
                 })
                 .attr("cy", function (d) {
-                    return y(d.temperature);
+                    return y(d.y);
                 });
 
         });

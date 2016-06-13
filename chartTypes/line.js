@@ -46,7 +46,7 @@ function d3Line(obj) {
             return x(d.date);
         })
         .y(function (d) {
-            return y(d.temperature);
+            return y(d.y);
         });
 
 
@@ -70,7 +70,7 @@ function d3Line(obj) {
         return {
             label: name,
             data: data.map(function (d) {
-                return {date: d.date, temperature: +d[name]};
+                return {date: d.date, y: +d[name]};
             }),
             hover: false,
             disabled: true
@@ -79,6 +79,8 @@ function d3Line(obj) {
     });
     var rawData = JSON.parse(JSON.stringify(cities))
     var series, dataLength,zoom = true;
+
+    console.log(rawData)
 
     //HammerJs functionality added
     var div = document.getElementById(obj.divId.indexOf("#")==-1?obj.divId:obj.divId.replace("#",""));
@@ -337,12 +339,12 @@ function d3Line(obj) {
         y.domain([
             d3.min(series, function (c) {
                 return d3.min(c.data, function (v) {
-                    return v.temperature;
+                    return v.y;
                 });
             }) - 4,
             d3.max(series, function (c) {
                 return d3.max(c.data, function (v) {
-                    return v.temperature;
+                    return v.y;
                 });
             }) + 5
         ]);
@@ -430,7 +432,7 @@ function d3Line(obj) {
                     return x(d.date);
                 })
                 .attr("cy", function (d) {
-                    return y(d.temperature);
+                    return y(d.y);
                 });
 
         });
