@@ -199,7 +199,7 @@ function d3Legend() {
 function d3Area(obj) {
     var chart = {};
 
-    var data = obj.data;
+    var data = obj.series;
 
     //Setting margin and width and height
     var margin = {top: 20, right: 30, bottom: 60, left: 50},
@@ -276,29 +276,23 @@ function d3Area(obj) {
 
 
     //Setting domain for the colors with te exceptioon of date column
-    color.domain(d3.keys(data[0]).filter(function (key) {
-        return key !== "date";
+    color.domain(data.map(function (d) {
+        return d.label
     }));
 
-
-
-    //Formatting data and assigning to cities variable
-    var cities = color.domain().map(function (name) {
-        return {
-            label: name,
-            data: data.map(function (d) {
-                return {date: d.date, y: +d[name]};
-            }),
-            hover: false,
-            disabled: true
-
-        };
-    });
+    for(var i=0;i<data.length;i++){
+        data[i].hover = false;
+        data[i].disabled = true;
+    }
+    var cities = data;
     var rawData = JSON.parse(JSON.stringify(cities))
     var series, dataLength, zoom = true;
 
     //HammerJs functionality added
     var div = document.getElementById(obj.divId.indexOf("#")==-1?obj.divId:obj.divId.replace("#",""));
+    if(div==null){
+        return
+    }
     var mc = new Hammer.Manager(div);
     var pinch = new Hammer.Pinch();
     var pan = new Hammer.Pan();
@@ -321,10 +315,6 @@ function d3Area(obj) {
                 panEnd = ev.center;
                 var pointsX = [parseInt(parseInt(panStart.x) / (width / x.domain().length)), parseInt(parseInt(panEnd.x) / (width / x.domain().length))]
                 var startLength = pointsX[0] - pointsX[1];
-                console.log("points", pointsX)
-                console.log("starLength=", startLength);
-                console.log("start location old", startLocation);
-                console.log(startLocation + startLength + cities[0].data.length)
                 var maxDataLength = 0, rawDataMaxLength = 0;
                 cities.forEach(function (d, i) {
                     if (maxDataLength < d.data.length) {
@@ -341,10 +331,8 @@ function d3Area(obj) {
                     startLength = startLength - ( (startLocation + startLength + maxDataLength) - rawDataMaxLength )
                 }
                 startLocation = (startLocation + startLength) < 0 ? 0 : (startLocation + startLength);
-                console.log("start location updated", startLocation);
                 cities.forEach(function (d, i) {
                     var dataLength = (startLocation + d.data.length) < rawData[i].data.length ? (startLocation + d.data.length) : rawData[i].data.length;
-                    console.log("Data length", dataLength);
                     d.data = rawData[i].data.slice(startLocation, dataLength);
                 });
                 chart.plot();
@@ -354,13 +342,11 @@ function d3Area(obj) {
 
         mc.on("pinchstart", function (ev) {
             pinchFlag = true;
-            console.log("pinch start");
             startPointsPinch = ev.pointers;
 
         });
 
         mc.on("pinchend", function (ev) {
-            console.log("pinchend");
             endPointsPinch = ev.pointers;
             var xpos = parseInt(startPointsPinch[0].clientX), flag = true;
             var startFlag = startPointsPinch[0].clientX < startPointsPinch[1].clientX;
@@ -384,9 +370,6 @@ function d3Area(obj) {
                     startFlag == true ? endPointsPinch[1].clientY : endPointsPinch[0].clientY
                 ]
             ];
-            console.log("Chart Name", obj.divId);
-            console.log("Change index first point", parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)), "-->", parseInt(parseInt(xPinch[1][0]) / (width / x.domain().length)));
-            console.log("Change index second point", parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)), "-->", parseInt(parseInt(xPinch[1][1]) / (width / x.domain().length)));
             console.log("trigger = ",
                 (parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)))
                 <
@@ -394,8 +377,6 @@ function d3Area(obj) {
 
             var startLength = (parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[1][0]) / (width / x.domain().length)));
             var endLength = (parseInt(parseInt(xPinch[1][1]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)));
-            console.log("points to be shifted from front", startLength);
-            console.log("points to be shifted from end", endLength);
             if ((startLocation + startLength) < 0) {
                 startLength = startLength - (startLength + startLocation);
             }
@@ -407,24 +388,19 @@ function d3Area(obj) {
                     return;
                 //slicing each line if and only if the length of data > 50 (minimum no of ticks should be present in the graph)
                 if (startLength > 0 && endLength > 0) {
-                    console.log("pure zoom in");
                     if (d.data.length > 10) {
                         d.data = d.data.splice(startLength, d.data.length - endLength);
                     } else {
-                        console.log("no change");
-                        console.log(startLocation, startLength);
                         startLocation = startLocation - startLength;
                         loopingVariable = false;
                     }
                 }
                 else {
-                    console.log("Pure zoom out");
                     var dataLength = ((-startLength + d.data.length - endLength) > rawData[i].data.length ? rawData[i].data.length : (-startLength + d.data.length - endLength));
                     dataLength = (startLocation + dataLength - 1) >= rawData[i].data.length ? (rawData[i].data.length - startLocation - 1) : (dataLength - 1);
                     d.data = rawData[i].data.slice(startLocation, startLocation + dataLength);
                 }
             });
-            console.log("starting index in original data=", startLocation, cities[0].data[0]);
             // rawData[0].data.forEach(function (d, i) {
             //     if (moment(d.date).format("YYYY-MM-DD") == moment(cities[0].data[0].date).format("YYYY-MM-DD")) {
             //         console.log("checking data", i);
@@ -480,7 +456,7 @@ function d3Area(obj) {
             .attr("y",  (margin.top / 2))
             .attr("text-anchor", "middle")
             .style("font-size", "20px")
-            .text(obj.title);
+            .text(obj.title.text);
 
         //Reset Zoom Button
         svg.append('g').attr('class','resetZoom')
@@ -510,9 +486,7 @@ function d3Area(obj) {
             console.log("reset triggered");
             cities.forEach(function (d,i) {
                 d.data = rawData[i].data;
-                console.log(d);
             });
-            console.log(cities);
             zoom = true;
             chart.plot()
 
@@ -545,7 +519,6 @@ function d3Area(obj) {
 
         //var mult = Math.max(1, Math.floor(width / x.domain().length));
         x.rangePoints([0, width], 0.1, 0);
-        //console.log("Mult = ",mult,x.domain().length,width)
         //setting the upper an d lower limit in y - axis
         y.domain([
             d3.min(series, function(c) { return d3.min(c.data, function(v) { return v.y0; }); }),
@@ -681,7 +654,10 @@ function d3Area(obj) {
                 .attr('r', 6)
                 .style('visibility', mouseMoveHide);
             var data = hover.data();
-            nvtooltip.show(obj.divId,[cord[0], cord[1]], '<h3>' + moment(data[0].date).format("YYYY-MM-DD") + '</h3>');
+            var legends = series.map(function (d) {
+                return d.label;
+            })
+            nvtooltip.show(obj.divId,[cord[0], cord[1]], obj.tooltip.formatter(data,legends));
 
         })
             .on('mouseout', function () {
@@ -712,7 +688,6 @@ function d3Area(obj) {
                     origin = d3.mouse(e),   // origin is the array containing the location of cursor from where the rectangle is created
                     rect = svg.append("rect").attr("class", "zoom"); //apending the rectangle to the chart
                 d3.select("body").classed("noselect", true);  //disable select
-                console.log(origin)
                 //find the min between the width and and cursor location to prevent the rectangle move out of the chart
                 origin[0] = Math.max(0, Math.min(width, (origin[0] - margin.left)));
                 HoverFlag = false;
@@ -724,7 +699,6 @@ function d3Area(obj) {
                 //if the mouse is down and mouse is moved than start creating the rectangle
                 d3.select(window)
                     .on("mousemove.zoomRect", function () {
-                        console.log("zooming rectangle changing")
                         //current location of mouse
                         var m = d3.mouse(e);
                         //find the min between the width and and cursor location to prevent the rectangle move out of the chart
@@ -747,7 +721,6 @@ function d3Area(obj) {
 
                         //the position where the mouse the released
                         m[0] = Math.max(0, Math.min(width, (m[0] - margin.left)));
-                        console.log("zooming complete");
                         //check that the origin location on x axis of the mouse should not be eqaul to last
                         if (m[0] !== origin[0]&&series.length!=0) {
 
@@ -809,7 +782,7 @@ function d3Area(obj) {
 
 
         function hover() {
-            d3.selectAll("path").classed("line-hover", function (d) {
+            svg.selectAll("path").classed("line-hover", function (d) {
                 return d.hover
             })
         }
@@ -846,7 +819,7 @@ function d3GroupedBar(obj) {
 
     var chart = {};
 
-    var data = obj.data;
+    var data = obj.series;
 
     //Setting margin and width and height
     var margin = {top: 20, right: 30, bottom: 60, left: 50},
@@ -885,15 +858,16 @@ function d3GroupedBar(obj) {
     //calling legend and setting width,height,margin,color
     var legend = d3Legend().height(height + margin.top + margin.bottom).width(width).margin(margin).color(color);
 
-    color.domain(d3.keys(data[0]).filter(function (key) {
-        return key !== "date";
+    //Setting domain for the colors with te exceptioon of date column
+    color.domain(data.map(function (d) {
+        return d.label
     }));
 
-    var cities = color.domain().map(function (c) {
-        return data.map(function (d) {
-            return {x: d.date, y: +d[c]};
-        });
-    });
+    var cities = data.map(function (d) {
+        return d.data.map(function (d) {
+            return {x:d.date,y:+d.y}
+        })
+    })
 
     for (var i = 0; i < cities.length; i++) {
         var cityCopyObj = {};
@@ -910,7 +884,9 @@ function d3GroupedBar(obj) {
 
     //HammerJs functionality added
     var div = document.getElementById(obj.divId.indexOf("#") == -1 ? obj.divId : obj.divId.replace("#", ""));
-
+    if(div==null){
+        return
+    }
     var mc = new Hammer.Manager(div);
     var pinch = new Hammer.Pinch();
     var pan = new Hammer.Pan();
@@ -933,10 +909,6 @@ function d3GroupedBar(obj) {
                 panEnd = ev.center;
                 var pointsX = [parseInt(parseInt(panStart.x) / (width / x0.domain().length)), parseInt(parseInt(panEnd.x) / (width / x0.domain().length))]
                 var startLength = pointsX[0] - pointsX[1];
-                console.log("points", pointsX)
-                console.log("starLength=", startLength);
-                console.log("start location old", startLocation);
-                console.log(startLocation + startLength + cities[0].data.length)
                 var maxDataLength = 0, rawDataMaxLength = 0;
                 cities.forEach(function (d, i) {
                     if (maxDataLength < d.data.length) {
@@ -953,10 +925,8 @@ function d3GroupedBar(obj) {
                     startLength = startLength - ( (startLocation + startLength + maxDataLength) - rawDataMaxLength )
                 }
                 startLocation = (startLocation + startLength) < 0 ? 0 : (startLocation + startLength);
-                console.log("start location updated", startLocation);
                 cities.forEach(function (d, i) {
                     var dataLength = (startLocation + d.data.length) < rawData[i].data.length ? (startLocation + d.data.length) : rawData[i].data.length;
-                    console.log("Data length", dataLength);
                     d.data = rawData[i].data.slice(startLocation, dataLength);
                 });
                 chart.plot();
@@ -966,13 +936,11 @@ function d3GroupedBar(obj) {
 
         mc.on("pinchstart", function (ev) {
             pinchFlag = true;
-            console.log("pinch start");
             startPointsPinch = ev.pointers;
 
         });
 
         mc.on("pinchend", function (ev) {
-            console.log("pinchend");
             endPointsPinch = ev.pointers;
             var xpos = parseInt(startPointsPinch[0].clientX), flag = true;
             var startFlag = startPointsPinch[0].clientX < startPointsPinch[1].clientX;
@@ -996,9 +964,6 @@ function d3GroupedBar(obj) {
                     startFlag == true ? endPointsPinch[1].clientY : endPointsPinch[0].clientY
                 ]
             ];
-            console.log("Chart Name", obj.divId);
-            console.log("Change index first point", parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)), "-->", parseInt(parseInt(xPinch[1][0]) / (width / x.domain().length)));
-            console.log("Change index second point", parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)), "-->", parseInt(parseInt(xPinch[1][1]) / (width / x.domain().length)));
             console.log("trigger = ",
                 (parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)))
                 <
@@ -1006,8 +971,6 @@ function d3GroupedBar(obj) {
 
             var startLength = (parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[1][0]) / (width / x.domain().length)));
             var endLength = (parseInt(parseInt(xPinch[1][1]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)));
-            console.log("points to be shifted from front", startLength);
-            console.log("points to be shifted from end", endLength);
             if ((startLocation + startLength) < 0) {
                 startLength = startLength - (startLength + startLocation);
             }
@@ -1019,24 +982,19 @@ function d3GroupedBar(obj) {
                     return;
                 //slicing each line if and only if the length of data > 50 (minimum no of ticks should be present in the graph)
                 if (startLength > 0 && endLength > 0) {
-                    console.log("pure zoom in");
                     if (d.data.length > 10) {
                         d.data = d.data.splice(startLength, d.data.length - endLength);
                     } else {
-                        console.log("no change");
-                        console.log(startLocation, startLength);
                         startLocation = startLocation - startLength;
                         loopingVariable = false;
                     }
                 }
                 else {
-                    console.log("Pure zoom out");
                     var dataLength = ((-startLength + d.data.length - endLength) > rawData[i].data.length ? rawData[i].data.length : (-startLength + d.data.length - endLength));
                     dataLength = (startLocation + dataLength - 1) >= rawData[i].data.length ? (rawData[i].data.length - startLocation - 1) : (dataLength - 1);
                     d.data = rawData[i].data.slice(startLocation, startLocation + dataLength);
                 }
             });
-            console.log("starting index in original data=", startLocation, cities[0].data[0]);
             // rawData[0].data.forEach(function (d, i) {
             //     if (moment(d.date).format("YYYY-MM-DD") == moment(cities[0].data[0].date).format("YYYY-MM-DD")) {
             //         console.log("checking data", i);
@@ -1087,7 +1045,7 @@ function d3GroupedBar(obj) {
             .attr("y", (margin.top / 2))
             .attr("text-anchor", "middle")
             .style("font-size", "20px")
-            .text(obj.title);
+            .text(obj.title.text);
 
         //Reset Zoom Button
         svg.append('g').attr('class', 'resetZoom')
@@ -1114,12 +1072,9 @@ function d3GroupedBar(obj) {
 
         //Click on reset zoom function
         d3.select(obj.divId+" > svg > g > g[class='resetZoom']").on("mousedown", function () {
-            console.log("reset triggered");
             cities.forEach(function (d, i) {
                 d.data = rawData[i].data;
-                console.log(d);
             });
-            console.log(cities);
             zoom = true;
             chart.plot()
 
@@ -1222,7 +1177,10 @@ function d3GroupedBar(obj) {
                 if (cord[1] <  2*margin.top || cord[1] > height || series.length == 0 || series[0].data.length == 0) {
                     return
                 }
-                nvtooltip.show(obj.divId,[x0(d.x) + margin.left + x0.rangeBand() / 2, cord[1]], '<h3>' + moment(d.x).format("YYYY-MM-DD") + '</h3>');
+                var legends = series.map(function (d) {
+                    return d.label;
+                })
+                nvtooltip.show(obj.divId,[x0(d.x) + margin.left + x0.rangeBand() / 2, cord[1]], obj.tooltip.formatter(data,legends));
             })
             .on('mouseout', function (d) {
                 nvtooltip.cleanup();
@@ -1335,7 +1293,7 @@ function d3Line(obj) {
 
     var chart = {};
 
-    var data = obj.data;
+    var data = obj.series;
 
     //Setting margin and width and height
     var margin = {top: 20, right: 30, bottom: 90, left: 50},
@@ -1388,32 +1346,27 @@ function d3Line(obj) {
         HoverFlag = true;
 
     //Setting domain for the colors with te exceptioon of date column
-    color.domain(d3.keys(data[0]).filter(function (key) {
-        return key !== "date";
+    color.domain(data.map(function (d) {
+        return d.label
     }));
 
-    //Parsing date in the required format
 
 
-    //Formatting data and assigning to cities variable
-    var cities = color.domain().map(function (name) {
-        return {
-            label: name,
-            data: data.map(function (d) {
-                return {date: d.date, y: +d[name]};
-            }),
-            hover: false,
-            disabled: true
+    for(var i=0;i<data.length;i++){
+        data[i].hover = false
+        data[i].disabled = true
+    }
 
-        };
-    });
+
+    var cities = data;
     var rawData = JSON.parse(JSON.stringify(cities))
     var series, dataLength,zoom = true;
 
-    console.log(rawData)
-
     //HammerJs functionality added
     var div = document.getElementById(obj.divId.indexOf("#")==-1?obj.divId:obj.divId.replace("#",""));
+    if(div==null){
+        return
+    }
     var mc = new Hammer.Manager(div);
     var pinch = new Hammer.Pinch();
     var pan = new Hammer.Pan();
@@ -1443,10 +1396,6 @@ function d3Line(obj) {
                 panEnd = ev.center;
                 var pointsX = [parseInt(parseInt(panStart.x) / (width / x.domain().length)), parseInt(parseInt(panEnd.x) / (width / x.domain().length))]
                 var startLength = pointsX[0] - pointsX[1];
-                console.log("points", pointsX)
-                console.log("starLength=", startLength);
-                console.log("start location old", startLocation);
-                console.log(startLocation + startLength + cities[0].data.length)
                 var maxDataLength = 0, rawDataMaxLength = 0;
                 cities.forEach(function (d, i) {
                     if (maxDataLength < d.data.length) {
@@ -1463,10 +1412,8 @@ function d3Line(obj) {
                     startLength = startLength - ( (startLocation + startLength + maxDataLength) - rawDataMaxLength )
                 }
                 startLocation = (startLocation + startLength) < 0 ? 0 : (startLocation + startLength);
-                console.log("start location updated", startLocation);
                 cities.forEach(function (d, i) {
                     var dataLength = (startLocation + d.data.length) < rawData[i].data.length ? (startLocation + d.data.length) : rawData[i].data.length;
-                    console.log("Data length", dataLength);
                     d.data = rawData[i].data.slice(startLocation, dataLength);
                 });
                 chart.plot()
@@ -1476,13 +1423,11 @@ function d3Line(obj) {
 
         mc.on("pinchstart", function (ev) {
             pinchFlag = true;
-            console.log("pinch start");
             startPointsPinch = ev.pointers;
 
         });
 
         mc.on("pinchend", function (ev) {
-            console.log("pinchend");
             endPointsPinch = ev.pointers;
             var xpos = parseInt(startPointsPinch[0].clientX), flag = true;
             var startFlag = startPointsPinch[0].clientX < startPointsPinch[1].clientX;
@@ -1506,9 +1451,6 @@ function d3Line(obj) {
                     startFlag == true ? endPointsPinch[1].clientY : endPointsPinch[0].clientY
                 ]
             ];
-            console.log("Chart Name", obj.divId);
-            console.log("Change index first point", parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)), "-->", parseInt(parseInt(xPinch[1][0]) / (width / x.domain().length)));
-            console.log("Change index second point", parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)), "-->", parseInt(parseInt(xPinch[1][1]) / (width / x.domain().length)));
             console.log("trigger = ",
                 (parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)))
                 <
@@ -1516,8 +1458,6 @@ function d3Line(obj) {
 
             var startLength = (parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[1][0]) / (width / x.domain().length)));
             var endLength = (parseInt(parseInt(xPinch[1][1]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)));
-            console.log("points to be shifted from front", startLength);
-            console.log("points to be shifted from end", endLength);
             if ((startLocation + startLength) < 0) {
                 startLength = startLength - (startLength + startLocation);
             }
@@ -1529,24 +1469,19 @@ function d3Line(obj) {
                     return;
 //                slicing each line if and only if the length of data > 50 (minimum no of ticks should be present in the graph)
                 if (startLength > 0 && endLength > 0) {
-                    console.log("pure zoom in");
                     if (d.data.length > 10) {
                         d.data = d.data.splice(startLength, d.data.length - endLength);
                     } else {
-                        console.log("no change");
-                        console.log(startLocation, startLength);
                         startLocation = startLocation - startLength;
                         loopingVariable = false;
                     }
                 }
                 else {
-                    console.log("Pure zoom out");
                     var dataLength = ((-startLength + d.data.length - endLength) > rawData[i].data.length ? rawData[i].data.length : (-startLength + d.data.length - endLength));
                     dataLength = (startLocation + dataLength - 1) >= rawData[i].data.length ? (rawData[i].data.length - startLocation - 1) : (dataLength - 1);
                     d.data = rawData[i].data.slice(startLocation, startLocation + dataLength);
                 }
             });
-            console.log("starting index in original data=", startLocation, cities[0].data[0]);
             // rawData[0].data.forEach(function (d, i) {
             //     if (moment(d.date).format("YYYY-MM-DD") == moment(cities[0].data[0].date).format("YYYY-MM-DD")) {
             //         console.log("checking data", i);
@@ -1601,7 +1536,7 @@ function d3Line(obj) {
             .attr("y",  (margin.top / 2))
             .attr("text-anchor", "middle")
             .style("font-size", "20px")
-            .text(obj.title);
+            .text(obj.title.text);
 
 
 
@@ -1634,9 +1569,7 @@ function d3Line(obj) {
             console.log("reset triggered");
             cities.forEach(function (d,i) {
                 d.data = rawData[i].data;
-                console.log(d);
             });
-            console.log(cities);
             zoom = true;
             chart.plot()
 
@@ -1841,7 +1774,6 @@ function d3Line(obj) {
                     origin = d3.mouse(e),   // origin is the array containing the location of cursor from where the rectangle is created
                     rect = svg.append("rect").attr("class", "zoom"); //apending the rectangle to the chart
                 d3.select("body").classed("noselect", true);  //disable select
-                console.log(origin)
                 //find the min between the width and and cursor location to prevent the rectangle move out of the chart
                 origin[0] = Math.max(0, Math.min(width, (origin[0] - margin.left)));
                 HoverFlag = false;
@@ -1854,7 +1786,6 @@ function d3Line(obj) {
                 //if the mouse is down and mouse is moved than start creating the rectangle
                 d3.select(window)
                     .on("mousemove.zoomRect", function () {
-                        console.log("zooming rectangle changing")
                         //current location of mouse
                         var m = d3.mouse(e);
                         //find the min between the width and and cursor location to prevent the rectangle move out of the chart
@@ -1876,7 +1807,6 @@ function d3Line(obj) {
 
                         //the position where the mouse the released
                         m[0] = Math.max(0, Math.min(width, (m[0] - margin.left)));
-                        console.log("zooming complete");
                         //check that the origin location on x axis of the mouse should not be eqaul to last
                         if (m[0] !== origin[0]&&series.length!=0) {
 
@@ -1938,11 +1868,10 @@ function d3Line(obj) {
 
 
         function hover() {
-            d3.selectAll("path").classed("line-hover", function (d) {
+            svg.selectAll("path").classed("line-hover", function (d) {
                 return d.hover
             })
         }
-
 
     };
 
@@ -1975,7 +1904,7 @@ function d3Stacked(obj) {
 
     var chart = {};
 
-    var data = obj.data;
+    var data = obj.series;
 
     //Setting margin and width and height
     var margin = {top: 20, right: 30, bottom: 60, left: 50},
@@ -2017,16 +1946,17 @@ function d3Stacked(obj) {
     var legend = d3Legend().height(height + margin.top + margin.bottom).width(width).margin(margin).color(color);
 
 
-    color.domain(d3.keys(data[0]).filter(function (key) {
-        return key !== "date";
+    //Setting domain for the colors with te exceptioon of date column
+    color.domain(data.map(function (d) {
+        return d.label
     }));
 
-
-    var cities = d3.layout.stack()(color.domain().map(function (c) {
-        return data.map(function (d) {
-            return {x: d.date, y: +d[c]};
-        });
-    }));
+    var cities = d3.layout.stack()(data.map(function (d) {
+            return d.data.map(function (d) {
+                return {x:d.date,y:+d.y}
+            })
+        })
+    );
 
 
     for (var i = 0; i < cities.length; i++) {
@@ -2043,7 +1973,9 @@ function d3Stacked(obj) {
 
     //HammerJs functionality added
     var div = document.getElementById(obj.divId.indexOf("#") == -1 ? obj.divId : obj.divId.replace("#", ""));
-
+    if(div==null){
+        return
+    }
     var mc = new Hammer.Manager(div);
     var pinch = new Hammer.Pinch();
     var pan = new Hammer.Pan();
@@ -2066,10 +1998,6 @@ function d3Stacked(obj) {
                 panEnd = ev.center;
                 var pointsX = [parseInt(parseInt(panStart.x) / (width / x.domain().length)), parseInt(parseInt(panEnd.x) / (width / x.domain().length))]
                 var startLength = pointsX[0] - pointsX[1];
-                console.log("points", pointsX)
-                console.log("starLength=", startLength);
-                console.log("start location old", startLocation);
-                console.log(startLocation + startLength + cities[0].data.length)
                 var maxDataLength = 0, rawDataMaxLength = 0;
                 cities.forEach(function (d, i) {
                     if (maxDataLength < d.data.length) {
@@ -2086,10 +2014,8 @@ function d3Stacked(obj) {
                     startLength = startLength - ( (startLocation + startLength + maxDataLength) - rawDataMaxLength )
                 }
                 startLocation = (startLocation + startLength) < 0 ? 0 : (startLocation + startLength);
-                console.log("start location updated", startLocation);
                 cities.forEach(function (d, i) {
                     var dataLength = (startLocation + d.data.length) < rawData[i].data.length ? (startLocation + d.data.length) : rawData[i].data.length;
-                    console.log("Data length", dataLength);
                     d.data = rawData[i].data.slice(startLocation, dataLength);
                 });
                 chart.plot();
@@ -2099,13 +2025,11 @@ function d3Stacked(obj) {
 
         mc.on("pinchstart", function (ev) {
             pinchFlag = true;
-            console.log("pinch start");
             startPointsPinch = ev.pointers;
 
         });
 
         mc.on("pinchend", function (ev) {
-            console.log("pinchend");
             endPointsPinch = ev.pointers;
             var xpos = parseInt(startPointsPinch[0].clientX), flag = true;
             var startFlag = startPointsPinch[0].clientX < startPointsPinch[1].clientX;
@@ -2129,9 +2053,6 @@ function d3Stacked(obj) {
                     startFlag == true ? endPointsPinch[1].clientY : endPointsPinch[0].clientY
                 ]
             ];
-            console.log("Chart Name", obj.divId);
-            console.log("Change index first point", parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)), "-->", parseInt(parseInt(xPinch[1][0]) / (width / x.domain().length)));
-            console.log("Change index second point", parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)), "-->", parseInt(parseInt(xPinch[1][1]) / (width / x.domain().length)));
             console.log("trigger = ",
                 (parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)))
                 <
@@ -2139,8 +2060,6 @@ function d3Stacked(obj) {
 
             var startLength = (parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[1][0]) / (width / x.domain().length)));
             var endLength = (parseInt(parseInt(xPinch[1][1]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)));
-            console.log("points to be shifted from front", startLength);
-            console.log("points to be shifted from end", endLength);
             if ((startLocation + startLength) < 0) {
                 startLength = startLength - (startLength + startLocation);
             }
@@ -2152,24 +2071,19 @@ function d3Stacked(obj) {
                     return;
                 //slicing each line if and only if the length of data > 50 (minimum no of ticks should be present in the graph)
                 if (startLength > 0 && endLength > 0) {
-                    console.log("pure zoom in");
                     if (d.data.length > 10) {
                         d.data = d.data.splice(startLength, d.data.length - endLength);
                     } else {
-                        console.log("no change");
-                        console.log(startLocation, startLength);
                         startLocation = startLocation - startLength;
                         loopingVariable = false;
                     }
                 }
                 else {
-                    console.log("Pure zoom out");
                     var dataLength = ((-startLength + d.data.length - endLength) > rawData[i].data.length ? rawData[i].data.length : (-startLength + d.data.length - endLength));
                     dataLength = (startLocation + dataLength - 1) >= rawData[i].data.length ? (rawData[i].data.length - startLocation - 1) : (dataLength - 1);
                     d.data = rawData[i].data.slice(startLocation, startLocation + dataLength);
                 }
             });
-            console.log("starting index in original data=", startLocation, cities[0].data[0]);
             // rawData[0].data.forEach(function (d, i) {
             //     if (moment(d.date).format("YYYY-MM-DD") == moment(cities[0].data[0].date).format("YYYY-MM-DD")) {
             //         console.log("checking data", i);
@@ -2222,7 +2136,7 @@ function d3Stacked(obj) {
             .attr("y", (margin.top / 2))
             .attr("text-anchor", "middle")
             .style("font-size", "20px")
-            .text(obj.title);
+            .text(obj.title.text);
 
         //Reset Zoom Button
         svg.append('g').attr('class', 'resetZoom')
@@ -2251,9 +2165,7 @@ function d3Stacked(obj) {
             console.log("reset triggered");
             cities.forEach(function (d, i) {
                 d.data = rawData[i].data;
-                console.log(d);
             });
-            console.log(cities);
             zoom = true;
             chart.plot()
 
@@ -2365,7 +2277,10 @@ function d3Stacked(obj) {
                 if (cord[1] < 2 * margin.top || cord[1] > height || series.length == 0 || series[0].data.length == 0) {
                     return
                 }
-                nvtooltip.show(obj.divId, [x(d.x) + margin.left + x.rangeBand() / 2, cord[1]], '<h3>' + moment(d.x).format("YYYY-MM-DD") + '</h3>');
+                var legends = series.map(function (d) {
+                    return d.label;
+                })
+                nvtooltip.show(obj.divId, [x(d.x) + margin.left + x.rangeBand() / 2, cord[1]], obj.tooltip.formatter(data,legends));
             })
             .on('mouseout', function (d) {
                 nvtooltip.cleanup();
@@ -2392,7 +2307,6 @@ function d3Stacked(obj) {
                 //if the mouse is down and mouse is moved than start creating the rectangle
                 d3.selectAll(obj.divId)
                     .on("mousemove.zoomRect", function (d) {
-                        console.log("zooming rectangle changing")
                         //current location of mouse
                         var m = d3.mouse(e);
                         //find the min between the width and and cursor location to prevent the rectangle move out of the chart
@@ -2476,7 +2390,7 @@ function d3Scattered(obj) {
 
     var chart = {};
 
-    var data = obj.data;
+    var data = obj.series;
 
     //Setting margin and width and height
     var margin = {top: 20, right: 30, bottom: 90, left: 50},
@@ -2529,28 +2443,23 @@ function d3Scattered(obj) {
         HoverFlag = true;
 
     //Setting domain for the colors with te exceptioon of date column
-    color.domain(d3.keys(data[0]).filter(function (key) {
-        return key !== "date";
+    color.domain(data.map(function (d) {
+        return d.label
     }));
 
-
-    //Formatting data and assigning to cities variable
-    var cities = color.domain().map(function (name) {
-        return {
-            label: name,
-            data: data.map(function (d) {
-                return {date: d.date, y: +d[name]};
-            }),
-            hover: false,
-            disabled: true
-
-        };
-    });
+    for(var i=0;i<data.length;i++){
+        data[i].hover = false
+        data[i].disabled = true
+    }
+    var cities = data;
     var rawData = JSON.parse(JSON.stringify(cities))
     var series, dataLength,zoom = true;
 
     //HammerJs functionality added
     var div = document.getElementById(obj.divId.indexOf("#")==-1?obj.divId:obj.divId.replace("#",""));
+    if(div==null){
+        return
+    }
     var mc = new Hammer.Manager(div);
     var pinch = new Hammer.Pinch();
     var pan = new Hammer.Pan();
@@ -2579,10 +2488,6 @@ function d3Scattered(obj) {
                 panEnd = ev.center;
                 var pointsX = [parseInt(parseInt(panStart.x) / (width / x.domain().length)), parseInt(parseInt(panEnd.x) / (width / x.domain().length))]
                 var startLength = pointsX[0] - pointsX[1];
-                console.log("points", pointsX)
-                console.log("starLength=", startLength);
-                console.log("start location old", startLocation);
-                console.log(startLocation + startLength + cities[0].data.length)
                 var maxDataLength = 0, rawDataMaxLength = 0;
                 cities.forEach(function (d, i) {
                     if (maxDataLength < d.data.length) {
@@ -2599,10 +2504,8 @@ function d3Scattered(obj) {
                     startLength = startLength - ( (startLocation + startLength + maxDataLength) - rawDataMaxLength )
                 }
                 startLocation = (startLocation + startLength) < 0 ? 0 : (startLocation + startLength);
-                console.log("start location updated", startLocation);
                 cities.forEach(function (d, i) {
                     var dataLength = (startLocation + d.data.length) < rawData[i].data.length ? (startLocation + d.data.length) : rawData[i].data.length;
-                    console.log("Data length", dataLength);
                     d.data = rawData[i].data.slice(startLocation, dataLength);
                 });
                 chart.plot();
@@ -2612,13 +2515,11 @@ function d3Scattered(obj) {
 
         mc.on("pinchstart", function (ev) {
             pinchFlag = true;
-            console.log("pinch start");
             startPointsPinch = ev.pointers;
 
         });
 
         mc.on("pinchend", function (ev) {
-            console.log("pinchend");
             endPointsPinch = ev.pointers;
             var xpos = parseInt(startPointsPinch[0].clientX), flag = true;
             var startFlag = startPointsPinch[0].clientX < startPointsPinch[1].clientX;
@@ -2642,9 +2543,6 @@ function d3Scattered(obj) {
                     startFlag == true ? endPointsPinch[1].clientY : endPointsPinch[0].clientY
                 ]
             ];
-            console.log("Chart Name", obj.divId);
-            console.log("Change index first point", parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)), "-->", parseInt(parseInt(xPinch[1][0]) / (width / x.domain().length)));
-            console.log("Change index second point", parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)), "-->", parseInt(parseInt(xPinch[1][1]) / (width / x.domain().length)));
             console.log("trigger = ",
                 (parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)))
                 <
@@ -2652,8 +2550,6 @@ function d3Scattered(obj) {
 
             var startLength = (parseInt(parseInt(xPinch[0][0]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[1][0]) / (width / x.domain().length)));
             var endLength = (parseInt(parseInt(xPinch[1][1]) / (width / x.domain().length)) - parseInt(parseInt(xPinch[0][1]) / (width / x.domain().length)));
-            console.log("points to be shifted from front", startLength);
-            console.log("points to be shifted from end", endLength);
             if ((startLocation + startLength) < 0) {
                 startLength = startLength - (startLength + startLocation);
             }
@@ -2665,24 +2561,19 @@ function d3Scattered(obj) {
                     return;
 //                slicing each line if and only if the length of data > 50 (minimum no of ticks should be present in the graph)
                 if (startLength > 0 && endLength > 0) {
-                    console.log("pure zoom in");
                     if (d.data.length > 10) {
                         d.data = d.data.splice(startLength, d.data.length - endLength);
                     } else {
-                        console.log("no change");
-                        console.log(startLocation, startLength);
                         startLocation = startLocation - startLength;
                         loopingVariable = false;
                     }
                 }
                 else {
-                    console.log("Pure zoom out");
                     var dataLength = ((-startLength + d.data.length - endLength) > rawData[i].data.length ? rawData[i].data.length : (-startLength + d.data.length - endLength));
                     dataLength = (startLocation + dataLength - 1) >= rawData[i].data.length ? (rawData[i].data.length - startLocation - 1) : (dataLength - 1);
                     d.data = rawData[i].data.slice(startLocation, startLocation + dataLength);
                 }
             });
-            console.log("starting index in original data=", startLocation, cities[0].data[0]);
             // rawData[0].data.forEach(function (d, i) {
             //     if (moment(d.date).format("YYYY-MM-DD") == moment(cities[0].data[0].date).format("YYYY-MM-DD")) {
             //         console.log("checking data", i);
@@ -2736,7 +2627,7 @@ function d3Scattered(obj) {
             .attr("y",  (margin.top / 2))
             .attr("text-anchor", "middle")
             .style("font-size", "20px")
-            .text(obj.title);
+            .text(obj.title.text);
 
 
 
@@ -2769,9 +2660,7 @@ function d3Scattered(obj) {
             console.log("reset triggered");
             cities.forEach(function (d,i) {
                 d.data = rawData[i].data;
-                console.log(d);
             });
-            console.log(cities);
             zoom = true;
             chart.plot()
 
@@ -2921,7 +2810,10 @@ function d3Scattered(obj) {
                 .attr('r', 6)
                 .style('visibility', mouseMoveHide);
             var data = hover.data();
-            nvtooltip.show(obj.divId,[cord[0], cord[1]], '<h3>' + moment(data[0].date).format("YYYY-MM-DD") + '</h3>');
+            var legends = series.map(function (d) {
+                return d.label;
+            })
+            nvtooltip.show(obj.divId,[cord[0], cord[1]],  obj.tooltip.formatter(data,legends));
 
         })
             .on('mouseout', function () {
@@ -2944,7 +2836,6 @@ function d3Scattered(obj) {
                     origin = d3.mouse(e),   // origin is the array containing the location of cursor from where the rectangle is created
                     rect = svg.append("rect").attr("class", "zoom"); //apending the rectangle to the chart
                 d3.select("body").classed("noselect", true);  //disable select
-                console.log(origin)
                 //find the min between the width and and cursor location to prevent the rectangle move out of the chart
                 origin[0] = Math.max(0, Math.min(width, (origin[0] - margin.left)));
                 HoverFlag = false;
@@ -2957,7 +2848,6 @@ function d3Scattered(obj) {
                 //if the mouse is down and mouse is moved than start creating the rectangle
                 d3.select(window)
                     .on("mousemove.zoomRect", function () {
-                        console.log("zooming rectangle changing")
                         //current location of mouse
                         var m = d3.mouse(e);
                         //find the min between the width and and cursor location to prevent the rectangle move out of the chart
@@ -2979,7 +2869,6 @@ function d3Scattered(obj) {
 
                         //the position where the mouse the released
                         m[0] = Math.max(0, Math.min(width, (m[0] - margin.left)));
-                        console.log("zooming complete");
                         //check that the origin location on x axis of the mouse should not be eqaul to last
                         if (m[0] !== origin[0]&&series.length!=0) {
 
@@ -3041,7 +2930,7 @@ function d3Scattered(obj) {
 
 
         function hover() {
-            d3.selectAll("path").classed("line-hover", function (d) {
+            svg.selectAll("path").classed("line-hover", function (d) {
                 return d.hover
             })
         }
@@ -3077,22 +2966,44 @@ function d3Scattered(obj) {
 }
 
 
-function d3Chart(obj) {
-    switch (obj.type){
+function d3Chart(temp) {
+    var obj = JSON.parse(JSON.stringify(temp));
+    obj = copyObjaa(temp);
+    switch (obj.chart.type){
         case 'line':
-            d3Line(obj);
+            new d3Line(obj);
             break;
         case 'area':
-            d3Area(obj);
+            new d3Area(obj);
             break;
         case 'stacked':
-            d3Stacked(obj);
+            new d3Stacked(obj);
             break;
         case 'scattered':
-            d3Scattered(obj);
+            new d3Scattered(obj);
             break;
         case 'bar':
-            d3GroupedBar(obj);
+            new d3GroupedBar(obj);
             break;
     }
+}
+
+
+function copyObjaa(object) {
+    var temp = {};
+    for (var key in object) {
+        if(object.hasOwnProperty(key)){
+            if(typeof object[key]=='object'&&Array.isArray(object[key])==false){
+                temp[key] = copyObj(object[key])
+            }else {
+                temp[key] = object[key]
+            }
+        }
+    }
+    return temp;
+}
+
+function isFunction(functionToCheck) {
+    var getType = {};
+    return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
 }

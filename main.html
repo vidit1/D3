@@ -30,12 +30,28 @@
         data.forEach(function (d) {
             d.date = parseDate(d.date);
         });
+        var rawDataaaa = JSON.parse(JSON.stringify(data));
+        var colora = d3.scale.category10();
+
+        colora.domain(d3.keys(data[0]).filter(function (key) {
+            return key !== "date";
+        }));
+        data = colora.domain().map(function (name) {
+            return {
+                label: name,
+                data: data.map(function (d) {
+                    return {date: d.date, y: +d[name]};
+                })
+
+            };
+        });
+
         console.log(data);
         var obj1={
-            data:data,
+            series:data,
             divId:"#test1",
-            title:"Test Graph",
-            type:'line',
+            title:{text:"Test Graph"},
+            chart:{type:'line'},
             xAxis:{
                 label:"Date"
             },
@@ -54,10 +70,10 @@
             }
         };
         var obj2={
-            data:data,
+            series:data,
             divId:"#test2",
-            title:"Test Graph",
-            type:'area',
+            title:{text:"Test Graph"},
+            chart:{type:'area'},
             xAxis:{
                 label:"Date"
             },
@@ -76,10 +92,10 @@
             }
         };
         var obj3={
-            data:data,
+            series:data,
             divId:"#test3",
-            title:"Test Graph",
-            type:'stacked',
+            title:{text:"Test Graph"},
+            chart:{type:'stacked'},
             xAxis:{
                 label:"Date"
             },
@@ -98,10 +114,10 @@
             }
         };
         var obj4={
-            data:data,
+            series:data,
             divId:"#test4",
-            title:"Test Graph",
-            type:'scattered',
+            title:{text:"Test Graph"},
+            chart:{type:'scattered'},
             xAxis:{
                 label:"Date"
             },
@@ -120,10 +136,10 @@
             }
         };
         var obj5={
-            data:data,
+            series:data,
             divId:"#test5",
-            title:"Test Graph",
-            type:'bar',
+            title:{text:"Test Graph"},
+            chart:{type:'line'},
             xAxis:{
                 label:"Date"
             },
