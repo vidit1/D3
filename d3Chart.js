@@ -10,7 +10,7 @@
         var container = $('<div class="nvtooltip">');
 
         gravity = gravity || 's';
-        dist = dist || 20;
+        dist = dist || 15;
 
         container
             .html(content)
@@ -30,21 +30,20 @@
             case 'e':
             case 'w':
             case 'n':
-                left = pos[0] - (width / 2) + $(div).offset().left;
-                top = pos[1] + dist +$(div).offset().top;
+                left = pos[0] - (width / 2)
+                top = pos[1] + dist
                 if (left < 0) left = 5;
                 if (left + width > windowWidth) left = windowWidth - width - 5;
                 if (scrollTop + windowHeight < top + height) top = pos[1] - height - dist;
                 break;
             case 's':
-                left = pos[0] - (width / 2)+ $(div).offset().left;
-                top = pos[1] - height - dist+$(div).offset().top;
+                left = pos[0] - (width / 2);
+                top = pos[1] - height - dist;
                 if (left < 0) left = 5;
                 if (left + width > windowWidth) left = windowWidth - width - 5;
-                if (scrollTop > top) top = pos[1] + dist;
+                if (scrollTop > top) top = pos[1] -dist/2;
                 break;
         }
-
         container
             .css({
                 left: left,
@@ -74,7 +73,7 @@
 
 
 function d3Legend() {
-    var margin = {top: 20, right: 80, bottom: 30, left: 50},
+    var margin = {top: 20, right: 20, bottom: 30, left: 50},
         width = 960 - margin.left - margin.right,
         height = 500 - margin.top - margin.bottom,
         color = d3.scale.category10().range(),
@@ -83,6 +82,8 @@ function d3Legend() {
 
     function chart(selection) {
         selection.each(function(data) {
+            console.log(width,height,margin)
+
             /**
              *    Legend curently is setup to automaticaly expand vertically based on a max width.
              *    Should implement legend where EITHER a maxWidth or a maxHeight is defined, then
@@ -164,6 +165,7 @@ function d3Legend() {
     chart.margin = function(_) {
         if (!arguments.length) return margin;
         margin = _;
+        margin.top = 0
         return chart;
     };
 
@@ -546,7 +548,7 @@ function d3Area(obj) {
             .attr("y", 35)
             .style("text-anchor", "middle")
             .attr("class","axis-label")
-            .text(obj.xAxis&&obj.xAxis.label?obj.xAxis.label:"");
+            .text(obj.xAxis&&obj.xAxis.title.text?obj.xAxis.title.text:"");
 
         //Appending y - axis
         svg.append("g")
@@ -559,7 +561,7 @@ function d3Area(obj) {
             .attr("dx", -((height)/2)-margin.top)
             .style("text-anchor", "middle")
             .attr("class","axis-label")
-            .text(obj.yAxis&&obj.yAxis.label?obj.yAxis.label:"");
+            .text(obj.yAxis&&obj.xAxis.title.text?obj.xAxis.title.text:"");
 
 
         //Appending line in chart
@@ -1127,7 +1129,7 @@ function d3GroupedBar(obj) {
             .attr("dx", -((height) / 2) - margin.top)
             .style("text-anchor", "middle")
             .attr("class", "axis-label")
-            .text(obj.yAxis && obj.yAxis.label ? obj.yAxis.label : "");
+            .text(obj.yAxis && obj.xAxis.title.text ? obj.xAxis.title.text : "");
 
         //Appending x - axis
         svg.append("g")
@@ -1139,7 +1141,7 @@ function d3GroupedBar(obj) {
             .attr("y", 35)
             .style("text-anchor", "middle")
             .attr("class", "axis-label")
-            .text(obj.xAxis && obj.xAxis.label ? obj.xAxis.label : "");
+            .text(obj.xAxis && obj.xAxis.title.text ? obj.xAxis.title.text : "");
 
 
         svg.append("g").selectAll("g")
@@ -1205,7 +1207,7 @@ function d3GroupedBar(obj) {
                     HoverFlag = true;
                     return
                 }
-
+                console.log("hahahahah")
                 //if the mouse is down and mouse is moved than start creating the rectangle
                 d3.selectAll(obj.divId)
                     .on("mousemove.zoomRect", function (d) {
@@ -1296,7 +1298,8 @@ function d3Line(obj) {
     var data = obj.series;
 
     //Setting margin and width and height
-    var margin = {top: 20, right: 30, bottom: 90, left: 50},
+    var margin = {top: 20, right: 30, bottom:data.length>25?120:90, left: 50},
+
 
         width = $(obj.divId).width() - margin.left - margin.right,
         height = obj.height?obj.height:550 - margin.top - margin.bottom;
@@ -1339,7 +1342,7 @@ function d3Line(obj) {
 
 
     //calling legend and setting width,height,margin,color
-    var legend = d3Legend().height(height + margin.top + margin.bottom).width(width).margin(margin).color(color);
+    var legend
 
 
     var mouseMoveHide = 'visible',
@@ -1521,6 +1524,8 @@ function d3Line(obj) {
             return d.disabled;
         });
 
+        legend = d3Legend().height(height + margin.top + margin.bottom).width(width+margin.left+margin.right).margin(margin).color(color);
+
         //Appending legend box
         svg.append('g')
             .attr('class', 'legendWrap');
@@ -1529,6 +1534,8 @@ function d3Line(obj) {
         svg.select('.legendWrap').datum(cities)
             .attr('transform', 'translate(' + 0 + ',' + 0 + ')')
             .call(legend);
+
+
 
         //Chart Title
         svg.append('g').attr('class','titleWrap').append('text')
@@ -1635,7 +1642,7 @@ function d3Line(obj) {
             .attr("y", 35)
             .style("text-anchor", "middle")
             .attr("class","axis-label")
-            .text(obj.xAxis&&obj.xAxis.label?obj.xAxis.label:"");
+            .text(obj.xAxis&&obj.xAxis.title.text?obj.xAxis.title.text:"");
 
 
         //Appending y - axis
@@ -1649,7 +1656,7 @@ function d3Line(obj) {
             .attr("dx", -((height)/2)-margin.top)
             .style("text-anchor", "middle")
             .attr("class","axis-label")
-            .text(obj.yAxis&&obj.yAxis.label?obj.yAxis.label:"");
+            .text(obj.yAxis&&obj.xAxis.title.text?obj.xAxis.title.text:"");
 
 
         //Appending line in chart
@@ -1703,9 +1710,8 @@ function d3Line(obj) {
 
         //Hover functionality
         d3.selectAll(obj.divId).on('mousemove', function () {
-            nvtooltip.cleanup();
             var cord = d3.mouse(this);
-
+            nvtooltip.cleanup()
 
             if (HoverFlag) {
                 mouseMoveHide = 'visible'
@@ -1743,12 +1749,12 @@ function d3Line(obj) {
             var data = hover.data();
             var legends = series.map(function (d) {
                 return d.label;
-            })
-            nvtooltip.show(obj.divId,[cord[0], cord[1]], obj.tooltip.formatter(data,legends));
+            });
+            nvtooltip.show(obj.divId,[cord[0], cord[1]], obj.tooltip.formatter(data,legends),'n');
 
         })
             .on('mouseout', function () {
-                nvtooltip.cleanup();
+                nvtooltip.cleanup()
                 var radius;
                 if (dataLength > 200) {
                     radius = 0
@@ -1943,7 +1949,7 @@ function d3Stacked(obj) {
         HoverFlag = true;
 
     //calling legend and setting width,height,margin,color
-    var legend = d3Legend().height(height + margin.top + margin.bottom).width(width).margin(margin).color(color);
+    var legend ;
 
 
     //Setting domain for the colors with te exceptioon of date column
@@ -2103,16 +2109,16 @@ function d3Stacked(obj) {
 
         //Empty the container before loading
         d3.selectAll(obj.divId + " > *").remove();
-
         //Adding chart and placing chart at specific locaion using translate
         var svg = d3.select(obj.divId)
             .append("svg")
-            .attr("width", width + margin.left + margin.right)
+            .attr("width", width +   margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
             .attr("class", "chart")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+        legend = d3Legend().height(height + margin.top + margin.bottom).width(width).margin(margin).color(color);
 
         //Filtering data if the column is disable or not
         var series = cities.filter(function (d) {
@@ -2129,6 +2135,7 @@ function d3Stacked(obj) {
             .attr('transform', 'translate(' + 0 + ',' + 0 + ')')
             .call(legend);
 
+        console.log(svg.select('.legendWrap').node().getBBox().height,margin.bottom)
 
         //Chart Title
         svg.append('g').attr('class', 'titleWrap').append('text')
@@ -2192,7 +2199,6 @@ function d3Stacked(obj) {
         for (var i = 0; i < series.length; i++) {
             series[i].data = temp[i]
         }
-
         x.domain(series[0].data.map(function (d) {
             return d.x;
         }));
@@ -2224,7 +2230,7 @@ function d3Stacked(obj) {
             .attr("dx", -((height) / 2) - margin.top)
             .style("text-anchor", "middle")
             .attr("class", "axis-label")
-            .text(obj.yAxis && obj.yAxis.label ? obj.yAxis.label : "");
+            .text(obj.yAxis && obj.xAxis.title.text ? obj.xAxis.title.text : "");
 
 
         //Appending x - axis
@@ -2237,7 +2243,7 @@ function d3Stacked(obj) {
             .attr("y", 35)
             .style("text-anchor", "middle")
             .attr("class", "axis-label")
-            .text(obj.xAxis && obj.xAxis.label ? obj.xAxis.label : "");
+            .text(obj.xAxis && obj.xAxis.title.text ? obj.xAxis.title.text : "");
 
         var layer = svg.selectAll(".layer")
             .data(series)
@@ -2279,8 +2285,19 @@ function d3Stacked(obj) {
                 }
                 var legends = series.map(function (d) {
                     return d.label;
+                });
+                var xpos = parseInt(cord[0]/(x.rangeBand()));
+                var foundFlag = d.x instanceof Date ? moment(series[0].data[xpos].x)==moment(d.x):series[0].data[xpos].x==d.x;
+                while(foundFlag==false)
+                {
+                    var greaterFlag = d.x instanceof Date ? moment(series[0].data[xpos].x)>moment(d.x) : series[0].data[xpos].x>d.x;
+                    xpos = greaterFlag==true ? xpos-1:xpos+1;
+                    foundFlag = d.x instanceof Date ? moment(series[0].data[xpos].x).format("YYYY-MM-DD")==moment(d.x).format("YYYY-MM-DD"):series[0].data[xpos].x==d.x;
+                }
+                var tempData = series.map(function (d) {
+                    return d.data[xpos]
                 })
-                nvtooltip.show(obj.divId, [x(d.x) + margin.left + x.rangeBand() / 2, cord[1]], obj.tooltip.formatter(data,legends));
+                nvtooltip.show(obj.divId, [x(d.x) + margin.left + x.rangeBand() / 2, cord[1]], obj.tooltip.formatter(tempData,legends));
             })
             .on('mouseout', function (d) {
                 nvtooltip.cleanup();
@@ -2726,7 +2743,7 @@ function d3Scattered(obj) {
             .attr("y", 35)
             .style("text-anchor", "middle")
             .attr("class","axis-label")
-            .text(obj.xAxis&&obj.xAxis.label?obj.xAxis.label:"");
+            .text(obj.xAxis&&obj.xAxis.title.text?obj.xAxis.title.text:"");
 
 
         //Appending y - axis
@@ -2740,7 +2757,7 @@ function d3Scattered(obj) {
             .attr("dx", -((height)/2)-margin.top)
             .style("text-anchor", "middle")
             .attr("class","axis-label")
-            .text(obj.yAxis&&obj.yAxis.label?obj.yAxis.label:"");
+            .text(obj.yAxis&&obj.xAxis.title.text?obj.xAxis.title.text:"");
 
 
 
@@ -2976,7 +2993,7 @@ function d3Chart(temp) {
         case 'area':
             new d3Area(obj);
             break;
-        case 'stacked':
+        case 'column':
             new d3Stacked(obj);
             break;
         case 'scattered':
@@ -2986,6 +3003,8 @@ function d3Chart(temp) {
             new d3GroupedBar(obj);
             break;
     }
+    delete obj
+    delete temp
 }
 
 
