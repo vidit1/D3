@@ -30,8 +30,8 @@
             case 'e':
             case 'w':
             case 'n':
-                left = pos[0] - (width / 2)
-                top = pos[1] + dist
+                left = pos[0] - (width / 2);
+                top = pos[1] + dist;
                 if (left < 0) left = 5;
                 if (left + width > windowWidth) left = windowWidth - width - 5;
                 if (scrollTop + windowHeight < top + height) top = pos[1] - height - dist;
@@ -82,7 +82,7 @@ function d3Legend() {
 
     function chart(selection) {
         selection.each(function(data) {
-            console.log(width,height,margin)
+            console.log(width,height,margin);
 
             /**
              *    Legend curently is setup to automaticaly expand vertically based on a max width.
@@ -196,8 +196,7 @@ function d3Legend() {
 
 }
 
-
-function d3Area(obj) {
+function D3Area(obj) {
     var chart = {};
 
     var downloadFlag = false;
@@ -287,7 +286,7 @@ function d3Area(obj) {
         data[i].disabled = true;
     }
     var cities = data;
-    var rawData = JSON.parse(JSON.stringify(cities))
+    var rawData = JSON.parse(JSON.stringify(cities));
     var series, dataLength, zoom = true;
 
     //HammerJs functionality added
@@ -482,26 +481,32 @@ function d3Area(obj) {
             .style("font-size","12px")
             .text("Reset Zoom");
 
-        //Download data button
-        svg.append('g').attr('class','download')
-            .classed('hidden',downloadFlag)
-            .style("z-index",1000)
-            .append("rect")
-            .attr('x',width)
-            .attr("y",10)
-            .attr("rx",2)
-            .style("fill","#f2f2f2")
-            .style("stroke","#666666")
-            .style("stroke-width","1px")
+        if(obj.downloadFlag) {
 
-        d3.select(obj.divId+" > svg > g > g[class='download']").append('text')
-            .attr('x',width-10)
-            .attr("y",10)
-            .attr('font-family', 'FontAwesome')
-            .attr('font-size', '1.5em')
-            .text('\uf0ab')
-            .style("cursor","pointer");
+            //Download data button
+            svg.append('g').attr('class', 'download')
+                .classed('hidden', downloadFlag)
+                .style("z-index", 1000)
+                .append("rect")
+                .attr('x', width)
+                .attr("y", 10)
+                .attr("rx", 2)
+                .style("fill", "#f2f2f2")
+                .style("stroke", "#666666")
+                .style("stroke-width", "1px")
 
+            d3.select(obj.divId + " > svg > g > g[class='download']").append('text')
+                .attr('x', width - 10)
+                .attr("y", 10)
+                .attr('font-family', 'FontAwesome')
+                .attr('font-size', '1.5em')
+                .text('\uf0ab')
+                .style("cursor", "pointer");
+
+            d3.select(obj.divId+" > svg > g > g[class='download']").on("mousedown",function () {
+                downloadAsCsv(rawData,obj.title.text)
+            });
+        }
         //Graph Detail button
         svg.append('g').attr('class','graphDetails')
             .classed('hidden',downloadFlag)
@@ -519,17 +524,79 @@ function d3Area(obj) {
             .attr("y",10)
             .attr('font-family', 'FontAwesome')
             .attr('font-size', '1.5em')
-            .text('\uf10c')
+            .text('\uf05a')
             .style("cursor","pointer");
 
-        d3.select(obj.divId+" > svg > g > g[class='download']").on("mousedown",function () {
-            downloadAsCsv(rawData,obj.title.text)
-        });
-
         d3.select(obj.divId+" > svg > g > g[class='graphDetails']").on("mousedown",function () {
-
+            obj.exporting.buttons.customButton.onclick(obj)
         });
 
+        var qkeyButton={},textLength=0
+        if(obj.exporting.buttons.hasOwnProperty('qkeyButton')){
+            qkeyButton = obj.exporting.buttons.qkeyButton;
+            console.log(qkeyButton);
+            if(qkeyButton.type=="legendToggele"){
+                textLength = $('<span id="D3TextTemp" style="">'+(legendToggleTextFlag==true?"Select All":"Deselect All")+'</span>').appendTo('body').width();
+                $('#D3TextTemp').remove();
+                svg.append('g').attr('class', 'qkeyButton')
+                    .style("z-index", 1000)
+                    .append("rect")
+                    .attr('x', width - 10 - textLength -20 + (qkeyButton.x?qkeyButton.x:0 ))
+                    .attr("y", 5)
+                    .attr("rx", 2)
+                    .attr("width",textLength + 10)
+                    .style("fill", "#f2f2f2")
+                    .style("stroke", "#666666")
+                    .style("stroke-width", "1px");
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']")
+                    .append("text")
+                    .attr('x', width - 10 - textLength -5 + (qkeyButton.x ? qkeyButton.x : 0) )
+                    .attr("y", 5)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "15px")
+                    .text(legendToggleTextFlag==true?"Select All":"Deselect All")
+                    .style('text-decoration','underline')
+                    .style('cursor','pointer');
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']").on('mousedown',function () {
+                    cities.forEach(function (d) {
+                        d.disabled = legendToggleTextFlag;
+                    })
+                    legendToggleTextFlag = !legendToggleTextFlag;
+                    chart.plot();
+                })
+
+
+            }else {
+                textLength = $('<span id="D3TextTemp" style="">' + qkeyButton.text + '</span>').appendTo('body').width();
+                $('#D3TextTemp').remove();
+                svg.append('g').attr('class', 'qkeyButton')
+                    .style("z-index", 1000)
+                    .append("rect")
+                    .attr('x', width - 10 - textLength - 20 + (qkeyButton.x ? qkeyButton.x : 0 ))
+                    .attr("y", 5)
+                    .attr("rx", 2)
+                    .attr("width", textLength + 10)
+                    .style("fill", "#f2f2f2")
+                    .style("stroke", "#666666")
+                    .style("stroke-width", "1px");
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']")
+                    .append("text")
+                    .attr('x', width - 10 - textLength - 5 + (qkeyButton.x ? qkeyButton.x : 0))
+                    .attr("y", 5)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "15px")
+                    .text(qkeyButton.text)
+                    .style('text-decoration', 'underline')
+                    .style('cursor', 'pointer');
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']").on('mousedown',function () {
+                    qkeyButton.onclick();
+                })
+            }
+        }
 
 
         //Click on reset zoom function
@@ -707,7 +774,7 @@ function d3Area(obj) {
             var data = hover.data();
             var legends = series.map(function (d) {
                 return d.label;
-            })
+            });
             nvtooltip.show(obj.divId,[cord[0], cord[1]], obj.tooltip.formatter(data,legends));
 
         })
@@ -789,7 +856,7 @@ function d3Area(obj) {
                                     });
                                 }
                             });
-                            zoom = false
+                            zoom = false;
                             //calling the update function to update the graph
                             chart.plot();
                         }
@@ -837,7 +904,7 @@ function d3Area(obj) {
                 return d.hover
             })
         }
-    }
+    };
 
     chart.plot();
 
@@ -864,7 +931,7 @@ function d3Area(obj) {
 
 }
 
-function d3GroupedBar(obj) {
+function D3GroupedBar(obj) {
 
     var numberOfTicks = 10;
 
@@ -879,8 +946,6 @@ function d3GroupedBar(obj) {
         width = $(obj.divId).width() - margin.left - margin.right,
         height = obj.height ? obj.height : 550 - margin.top - margin.bottom;
 
-    //Parse date function
-    var parseDate = d3.time.format("%Y%m%d").parse;
 
     var color = d3.scale.category10();
 
@@ -905,8 +970,7 @@ function d3GroupedBar(obj) {
         .innerTickSize(-width)
         .orient("left");
 
-    var mouseMoveHide = 'visible',
-        HoverFlag = true;
+    var HoverFlag = true;
 
     //calling legend and setting width,height,margin,color
     var legend = d3Legend().height(height + margin.top + margin.bottom).width(width).margin(margin).color(color);
@@ -920,7 +984,7 @@ function d3GroupedBar(obj) {
         return d.data.map(function (d) {
             return {x:d.date,y:+d.y}
         })
-    })
+    });
 
     for (var i = 0; i < cities.length; i++) {
         var cityCopyObj = {};
@@ -931,8 +995,8 @@ function d3GroupedBar(obj) {
         cities[i] = cityCopyObj
     }
 
-    var rawData = JSON.parse(JSON.stringify(cities))
-    var series, dataLength, zoom = true;
+    var rawData = JSON.parse(JSON.stringify(cities));
+    var series, zoom = true;
 
 
     //HammerJs functionality added
@@ -960,7 +1024,7 @@ function d3GroupedBar(obj) {
         mc.on("panend", function (ev) {
             if (pinchFlag == false) {
                 panEnd = ev.center;
-                var pointsX = [parseInt(parseInt(panStart.x) / (width / x0.domain().length)), parseInt(parseInt(panEnd.x) / (width / x0.domain().length))]
+                var pointsX = [parseInt(parseInt(panStart.x) / (width / x0.domain().length)), parseInt(parseInt(panEnd.x) / (width / x0.domain().length))];
                 var startLength = pointsX[0] - pointsX[1];
                 var maxDataLength = 0, rawDataMaxLength = 0;
                 cities.forEach(function (d, i) {
@@ -995,7 +1059,6 @@ function d3GroupedBar(obj) {
 
         mc.on("pinchend", function (ev) {
             endPointsPinch = ev.pointers;
-            var xpos = parseInt(startPointsPinch[0].clientX), flag = true;
             var startFlag = startPointsPinch[0].clientX < startPointsPinch[1].clientX;
             var xPinch = [
                 [//Starting info for x location
@@ -1122,26 +1185,32 @@ function d3GroupedBar(obj) {
             .style("font-size", "12px")
             .text("Reset Zoom");
 
-        //Download data button
-        svg.append('g').attr('class','download')
-            .classed('hidden',downloadFlag)
-            .style("z-index",1000)
-            .append("rect")
-            .attr('x',width)
-            .attr("y",10)
-            .attr("rx",2)
-            .style("fill","#f2f2f2")
-            .style("stroke","#666666")
-            .style("stroke-width","1px")
+        if(obj.downloadFlag) {
 
-        d3.select(obj.divId+" > svg > g > g[class='download']").append('text')
-            .attr('x',width-10)
-            .attr("y",10)
-            .attr('font-family', 'FontAwesome')
-            .attr('font-size', '1.5em')
-            .text('\uf0ab')
-            .style("cursor","pointer");
+            //Download data button
+            svg.append('g').attr('class', 'download')
+                .classed('hidden', downloadFlag)
+                .style("z-index", 1000)
+                .append("rect")
+                .attr('x', width)
+                .attr("y", 10)
+                .attr("rx", 2)
+                .style("fill", "#f2f2f2")
+                .style("stroke", "#666666")
+                .style("stroke-width", "1px");
 
+            d3.select(obj.divId + " > svg > g > g[class='download']").append('text')
+                .attr('x', width - 10)
+                .attr("y", 10)
+                .attr('font-family', 'FontAwesome')
+                .attr('font-size', '1.5em')
+                .text('\uf0ab')
+                .style("cursor", "pointer");
+
+            d3.select(obj.divId + " > svg > g > g[class='download']").on("mousedown", function () {
+                downloadAsCsv(rawData, obj.title.text)
+            });
+        }
         //Graph Detail button
         svg.append('g').attr('class','graphDetails')
             .classed('hidden',downloadFlag)
@@ -1159,16 +1228,82 @@ function d3GroupedBar(obj) {
             .attr("y",10)
             .attr('font-family', 'FontAwesome')
             .attr('font-size', '1.5em')
-            .text('\uf10c')
+            .text('\uf05a')
             .style("cursor","pointer");
 
-        d3.select(obj.divId+" > svg > g > g[class='download']").on("mousedown",function () {
-            downloadAsCsv(rawData,obj.title.text)
-        });
+
 
         d3.select(obj.divId+" > svg > g > g[class='graphDetails']").on("mousedown",function () {
-
+            obj.exporting.buttons.customButton.onclick(obj)
         });
+
+
+        var qkeyButton={},textLength=0;
+        if(obj.exporting.buttons.hasOwnProperty('qkeyButton')){
+            qkeyButton = obj.exporting.buttons.qkeyButton;
+            console.log(qkeyButton);
+            if(qkeyButton.type=="legendToggele"){
+                textLength = $('<span id="D3TextTemp" style="">'+(legendToggleTextFlag==true?"Select All":"Deselect All")+'</span>').appendTo('body').width();
+                $('#D3TextTemp').remove();
+                svg.append('g').attr('class', 'qkeyButton')
+                    .style("z-index", 1000)
+                    .append("rect")
+                    .attr('x', width - 10 - textLength -20 + (qkeyButton.x?qkeyButton.x:0 ))
+                    .attr("y", 5)
+                    .attr("rx", 2)
+                    .attr("width",textLength + 10)
+                    .style("fill", "#f2f2f2")
+                    .style("stroke", "#666666")
+                    .style("stroke-width", "1px");
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']")
+                    .append("text")
+                    .attr('x', width - 10 - textLength -5 + (qkeyButton.x ? qkeyButton.x : 0) )
+                    .attr("y", 5)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "15px")
+                    .text(legendToggleTextFlag==true?"Select All":"Deselect All")
+                    .style('text-decoration','underline')
+                    .style('cursor','pointer');
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']").on('mousedown',function () {
+                    cities.forEach(function (d) {
+                        d.disabled = legendToggleTextFlag;
+                    })
+                    legendToggleTextFlag = !legendToggleTextFlag;
+                    chart.plot();
+                })
+
+
+            }else {
+                textLength = $('<span id="D3TextTemp" style="">' + qkeyButton.text + '</span>').appendTo('body').width();
+                $('#D3TextTemp').remove();
+                svg.append('g').attr('class', 'qkeyButton')
+                    .style("z-index", 1000)
+                    .append("rect")
+                    .attr('x', width - 10 - textLength - 20 + (qkeyButton.x ? qkeyButton.x : 0 ))
+                    .attr("y", 5)
+                    .attr("rx", 2)
+                    .attr("width", textLength + 10)
+                    .style("fill", "#f2f2f2")
+                    .style("stroke", "#666666")
+                    .style("stroke-width", "1px");
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']")
+                    .append("text")
+                    .attr('x', width - 10 - textLength - 5 + (qkeyButton.x ? qkeyButton.x : 0))
+                    .attr("y", 5)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "15px")
+                    .text(qkeyButton.text)
+                    .style('text-decoration', 'underline')
+                    .style('cursor', 'pointer');
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']").on('mousedown',function () {
+                    qkeyButton.onclick();
+                })
+            }
+        }
 
 
         //Click on reset zoom function
@@ -1391,7 +1526,7 @@ function d3GroupedBar(obj) {
     return chart;
 }
 
-function d3Line(obj) {
+function D3Line(obj) {
 
     var chart = {};
 
@@ -1406,9 +1541,8 @@ function d3Line(obj) {
         width = $(obj.divId).width() - margin.left - margin.right,
         height = obj.height?obj.height:550 - margin.top - margin.bottom;
 
-    //Parse date function
 
-
+    var legendToggleTextFlag = false;
 
     //x
     var x = d3.scale.ordinal()
@@ -1464,7 +1598,7 @@ function d3Line(obj) {
 
 
     var cities = data;
-    var rawData = JSON.parse(JSON.stringify(cities))
+    var rawData = JSON.parse(JSON.stringify(cities));
     var series, dataLength,zoom = true;
 
     //HammerJs functionality added
@@ -1673,25 +1807,31 @@ function d3Line(obj) {
             .style("font-size","12px")
             .text("Reset Zoom");
 
-        //Download data button
-        svg.append('g').attr('class','download')
-            .classed('hidden',downloadFlag)
-            .style("z-index",1000)
-            .append("rect")
-            .attr('x',width)
-            .attr("y",10)
-            .attr("rx",2)
-            .style("fill","#f2f2f2")
-            .style("stroke","#666666")
-            .style("stroke-width","1px")
+        if(obj.downloadFlag) {
+            //Download data button
+            svg.append('g').attr('class', 'download')
+                .classed('hidden', downloadFlag)
+                .style("z-index", 1000)
+                .append("rect")
+                .attr('x', width)
+                .attr("y", 10)
+                .attr("rx", 2)
+                .style("fill", "#f2f2f2")
+                .style("stroke", "#666666")
+                .style("stroke-width", "1px")
 
-        d3.select(obj.divId+" > svg > g > g[class='download']").append('text')
-            .attr('x',width-10)
-            .attr("y",10)
-            .attr('font-family', 'FontAwesome')
-            .attr('font-size', '1.5em')
-            .text('\uf0ab')
-            .style("cursor","pointer");
+            d3.select(obj.divId + " > svg > g > g[class='download']").append('text')
+                .attr('x', width - 10)
+                .attr("y", 10)
+                .attr('font-family', 'FontAwesome')
+                .attr('font-size', '1.5em')
+                .text('\uf0ab')
+                .style("cursor", "pointer");
+
+            d3.select(obj.divId+" > svg > g > g[class='download']").on("mousedown",function () {
+                downloadAsCsv(rawData,obj.title.text)
+            });
+        }
 
         //Graph Detail button
         svg.append('g').attr('class','graphDetails')
@@ -1710,16 +1850,80 @@ function d3Line(obj) {
             .attr("y",10)
             .attr('font-family', 'FontAwesome')
             .attr('font-size', '1.5em')
-            .text('\uf10c')
+            .text('\uf05a')
             .style("cursor","pointer");
 
-        d3.select(obj.divId+" > svg > g > g[class='download']").on("mousedown",function () {
-            downloadAsCsv(rawData,obj.title.text)
-        });
 
         d3.select(obj.divId+" > svg > g > g[class='graphDetails']").on("mousedown",function () {
             obj.exporting.buttons.customButton.onclick(obj)
         });
+        var qkeyButton={},textLength=0
+        if(obj.hasOwnProperty('exporting'))
+        if(obj.exporting.buttons.hasOwnProperty('qkeyButton')){
+            qkeyButton = obj.exporting.buttons.qkeyButton;
+            console.log(qkeyButton);
+            if(qkeyButton.type=="legendToggele"){
+                textLength = $('<span id="D3TextTemp" style="">'+(legendToggleTextFlag==true?"Select All":"Deselect All")+'</span>').appendTo('body').width();
+                $('#D3TextTemp').remove();
+                svg.append('g').attr('class', 'qkeyButton')
+                    .style("z-index", 1000)
+                    .append("rect")
+                    .attr('x', width - 10 - textLength -20 + (qkeyButton.x?qkeyButton.x:0 ))
+                    .attr("y", 5)
+                    .attr("rx", 2)
+                    .attr("width",textLength + 10)
+                    .style("fill", "#f2f2f2")
+                    .style("stroke", "#666666")
+                    .style("stroke-width", "1px");
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']")
+                    .append("text")
+                    .attr('x', width - 10 - textLength -5 + (qkeyButton.x ? qkeyButton.x : 0) )
+                    .attr("y", 5)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "15px")
+                    .text(legendToggleTextFlag==true?"Select All":"Deselect All")
+                    .style('text-decoration','underline')
+                    .style('cursor','pointer');
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']").on('mousedown',function () {
+                    cities.forEach(function (d) {
+                        d.disabled = legendToggleTextFlag;
+                    })
+                    legendToggleTextFlag = !legendToggleTextFlag;
+                    chart.plot();
+                })
+
+
+            }else {
+                textLength = $('<span id="D3TextTemp" style="">' + qkeyButton.text + '</span>').appendTo('body').width();
+                $('#D3TextTemp').remove();
+                svg.append('g').attr('class', 'qkeyButton')
+                    .style("z-index", 1000)
+                    .append("rect")
+                    .attr('x', width - 10 - textLength - 20 + (qkeyButton.x ? qkeyButton.x : 0 ))
+                    .attr("y", 5)
+                    .attr("rx", 2)
+                    .attr("width", textLength + 10)
+                    .style("fill", "#f2f2f2")
+                    .style("stroke", "#666666")
+                    .style("stroke-width", "1px");
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']")
+                    .append("text")
+                    .attr('x', width - 10 - textLength - 5 + (qkeyButton.x ? qkeyButton.x : 0))
+                    .attr("y", 5)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "15px")
+                    .text(qkeyButton.text)
+                    .style('text-decoration', 'underline')
+                    .style('cursor', 'pointer');
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']").on('mousedown',function () {
+                    qkeyButton.onclick();
+                })
+            }
+        }
 
         //Click on reset zoom function
         d3.select(obj.divId+" > svg > g > g[class='resetZoom']").on("mousedown",function () {
@@ -2057,7 +2261,7 @@ function d3Line(obj) {
 
 }
 
-function d3Stacked(obj) {
+function D3Stacked(obj) {
 
     var chart = {};
 
@@ -2320,25 +2524,31 @@ function d3Stacked(obj) {
             .style("font-size", "12px")
             .text("Reset Zoom");
 
-        //Download data button
-        svg.append('g').attr('class','download')
-            .classed('hidden',downloadFlag)
-            .style("z-index",1000)
-            .append("rect")
-            .attr('x',width)
-            .attr("y",10)
-            .attr("rx",2)
-            .style("fill","#f2f2f2")
-            .style("stroke","#666666")
-            .style("stroke-width","1px")
+        if(obj.downloadFlag) {
+            //Download data button
+            svg.append('g').attr('class', 'download')
+                .classed('hidden', downloadFlag)
+                .style("z-index", 1000)
+                .append("rect")
+                .attr('x', width)
+                .attr("y", 10)
+                .attr("rx", 2)
+                .style("fill", "#f2f2f2")
+                .style("stroke", "#666666")
+                .style("stroke-width", "1px")
 
-        d3.select(obj.divId+" > svg > g > g[class='download']").append('text')
-            .attr('x',width-10)
-            .attr("y",10)
-            .attr('font-family', 'FontAwesome')
-            .attr('font-size', '1.5em')
-            .text('\uf0ab')
-            .style("cursor","pointer");
+            d3.select(obj.divId + " > svg > g > g[class='download']").append('text')
+                .attr('x', width - 10)
+                .attr("y", 10)
+                .attr('font-family', 'FontAwesome')
+                .attr('font-size', '1.5em')
+                .text('\uf0ab')
+                .style("cursor", "pointer");
+
+            d3.select(obj.divId + " > svg > g > g[class='download']").on("mousedown", function () {
+                downloadAsCsv(rawData, obj.title.text)
+            });
+        }
 
         //Graph Detail button
         svg.append('g').attr('class','graphDetails')
@@ -2357,17 +2567,81 @@ function d3Stacked(obj) {
             .attr("y",10)
             .attr('font-family', 'FontAwesome')
             .attr('font-size', '1.5em')
-            .text('\uf10c')
+            .text('\uf05a')
             .style("cursor","pointer");
 
-        d3.select(obj.divId+" > svg > g > g[class='download']").on("mousedown",function () {
-            downloadAsCsv(rawData,obj.title.text)
-        });
+
 
         d3.select(obj.divId+" > svg > g > g[class='graphDetails']").on("mousedown",function () {
-
+            obj.exporting.buttons.customButton.onclick(obj)
         });
 
+        var qkeyButton={},textLength=0
+        if(obj.exporting.buttons.hasOwnProperty('qkeyButton')){
+            qkeyButton = obj.exporting.buttons.qkeyButton;
+            console.log(qkeyButton);
+            if(qkeyButton.type=="legendToggele"){
+                textLength = $('<span id="D3TextTemp" style="">'+(legendToggleTextFlag==true?"Select All":"Deselect All")+'</span>').appendTo('body').width();
+                $('#D3TextTemp').remove();
+                svg.append('g').attr('class', 'qkeyButton')
+                    .style("z-index", 1000)
+                    .append("rect")
+                    .attr('x', width - 10 - textLength -20 + (qkeyButton.x?qkeyButton.x:0 ))
+                    .attr("y", 5)
+                    .attr("rx", 2)
+                    .attr("width",textLength + 10)
+                    .style("fill", "#f2f2f2")
+                    .style("stroke", "#666666")
+                    .style("stroke-width", "1px");
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']")
+                    .append("text")
+                    .attr('x', width - 10 - textLength -5 + (qkeyButton.x ? qkeyButton.x : 0) )
+                    .attr("y", 5)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "15px")
+                    .text(legendToggleTextFlag==true?"Select All":"Deselect All")
+                    .style('text-decoration','underline')
+                    .style('cursor','pointer');
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']").on('mousedown',function () {
+                    cities.forEach(function (d) {
+                        d.disabled = legendToggleTextFlag;
+                    })
+                    legendToggleTextFlag = !legendToggleTextFlag;
+                    chart.plot();
+                })
+
+
+            }else {
+                textLength = $('<span id="D3TextTemp" style="">' + qkeyButton.text + '</span>').appendTo('body').width();
+                $('#D3TextTemp').remove();
+                svg.append('g').attr('class', 'qkeyButton')
+                    .style("z-index", 1000)
+                    .append("rect")
+                    .attr('x', width - 10 - textLength - 20 + (qkeyButton.x ? qkeyButton.x : 0 ))
+                    .attr("y", 5)
+                    .attr("rx", 2)
+                    .attr("width", textLength + 10)
+                    .style("fill", "#f2f2f2")
+                    .style("stroke", "#666666")
+                    .style("stroke-width", "1px");
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']")
+                    .append("text")
+                    .attr('x', width - 10 - textLength - 5 + (qkeyButton.x ? qkeyButton.x : 0))
+                    .attr("y", 5)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "15px")
+                    .text(qkeyButton.text)
+                    .style('text-decoration', 'underline')
+                    .style('cursor', 'pointer');
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']").on('mousedown',function () {
+                    qkeyButton.onclick();
+                })
+            }
+        }
 
 
         //Click on reset zoom function
@@ -2491,7 +2765,7 @@ function d3Stacked(obj) {
                 });
 
                 var xpos = parseInt(Math.max(0,(cord[0]-margin.left))/(x.rangeBand()));
-                xpos = xpos>series[0].data.length?series[0].data.length-1:xpos
+                xpos = xpos>series[0].data.length?series[0].data.length-1:xpos;
                 var foundFlag = d.x instanceof Date ? moment(series[0].data[xpos].x)==moment(d.x):series[0].data[xpos].x==d.x;
                 while(foundFlag==false)
                 {
@@ -2608,7 +2882,7 @@ function d3Stacked(obj) {
     return chart;
 }
 
-function d3Scattered(obj) {
+function D3Scattered(obj) {
 
     var chart = {};
 
@@ -2881,26 +3155,32 @@ function d3Scattered(obj) {
             .style("font-size","12px")
             .text("Reset Zoom");
 
-        //Download data button
-        svg.append('g').attr('class','download')
-            .classed('hidden',downloadFlag)
-            .style("z-index",1000)
-            .append("rect")
-            .attr('x',width)
-            .attr("y",10)
-            .attr("rx",2)
-            .style("fill","#f2f2f2")
-            .style("stroke","#666666")
-            .style("stroke-width","1px")
+        if(obj.downloadFlag) {
 
-        d3.select(obj.divId+" > svg > g > g[class='download']").append('text')
-            .attr('x',width-10)
-            .attr("y",10)
-            .attr('font-family', 'FontAwesome')
-            .attr('font-size', '1.5em')
-            .text('\uf0ab')
-            .style("cursor","pointer");
+            //Download data button
+            svg.append('g').attr('class', 'download')
+                .classed('hidden', downloadFlag)
+                .style("z-index", 1000)
+                .append("rect")
+                .attr('x', width)
+                .attr("y", 10)
+                .attr("rx", 2)
+                .style("fill", "#f2f2f2")
+                .style("stroke", "#666666")
+                .style("stroke-width", "1px")
 
+            d3.select(obj.divId + " > svg > g > g[class='download']").append('text')
+                .attr('x', width - 10)
+                .attr("y", 10)
+                .attr('font-family', 'FontAwesome')
+                .attr('font-size', '1.5em')
+                .text('\uf0ab')
+                .style("cursor", "pointer");
+
+            d3.select(obj.divId+" > svg > g > g[class='download']").on("mousedown",function () {
+                downloadAsCsv(rawData,obj.title.text)
+            });
+        }
         //Graph Detail button
         svg.append('g').attr('class','graphDetails')
             .classed('hidden',downloadFlag)
@@ -2918,16 +3198,80 @@ function d3Scattered(obj) {
             .attr("y",10)
             .attr('font-family', 'FontAwesome')
             .attr('font-size', '1.5em')
-            .text('\uf10c')
+            .text('\uf05a')
             .style("cursor","pointer");
 
-        d3.select(obj.divId+" > svg > g > g[class='download']").on("mousedown",function () {
-            downloadAsCsv(rawData,obj.title.text)
-        });
-
         d3.select(obj.divId+" > svg > g > g[class='graphDetails']").on("mousedown",function () {
-
+            obj.exporting.buttons.customButton.onclick(obj)
         });
+
+        var qkeyButton={},textLength=0
+        if(obj.exporting.buttons.hasOwnProperty('qkeyButton')){
+            qkeyButton = obj.exporting.buttons.qkeyButton;
+            console.log(qkeyButton);
+            if(qkeyButton.type=="legendToggele"){
+                textLength = $('<span id="D3TextTemp" style="">'+(legendToggleTextFlag==true?"Select All":"Deselect All")+'</span>').appendTo('body').width();
+                $('#D3TextTemp').remove();
+                svg.append('g').attr('class', 'qkeyButton')
+                    .style("z-index", 1000)
+                    .append("rect")
+                    .attr('x', width - 10 - textLength -20 + (qkeyButton.x?qkeyButton.x:0 ))
+                    .attr("y", 5)
+                    .attr("rx", 2)
+                    .attr("width",textLength + 10)
+                    .style("fill", "#f2f2f2")
+                    .style("stroke", "#666666")
+                    .style("stroke-width", "1px");
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']")
+                    .append("text")
+                    .attr('x', width - 10 - textLength -5 + (qkeyButton.x ? qkeyButton.x : 0) )
+                    .attr("y", 5)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "15px")
+                    .text(legendToggleTextFlag==true?"Select All":"Deselect All")
+                    .style('text-decoration','underline')
+                    .style('cursor','pointer');
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']").on('mousedown',function () {
+                    cities.forEach(function (d) {
+                        d.disabled = legendToggleTextFlag;
+                    })
+                    legendToggleTextFlag = !legendToggleTextFlag;
+                    chart.plot();
+                })
+
+
+            }else {
+                textLength = $('<span id="D3TextTemp" style="">' + qkeyButton.text + '</span>').appendTo('body').width();
+                $('#D3TextTemp').remove();
+                svg.append('g').attr('class', 'qkeyButton')
+                    .style("z-index", 1000)
+                    .append("rect")
+                    .attr('x', width - 10 - textLength - 20 + (qkeyButton.x ? qkeyButton.x : 0 ))
+                    .attr("y", 5)
+                    .attr("rx", 2)
+                    .attr("width", textLength + 10)
+                    .style("fill", "#f2f2f2")
+                    .style("stroke", "#666666")
+                    .style("stroke-width", "1px");
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']")
+                    .append("text")
+                    .attr('x', width - 10 - textLength - 5 + (qkeyButton.x ? qkeyButton.x : 0))
+                    .attr("y", 5)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "15px")
+                    .text(qkeyButton.text)
+                    .style('text-decoration', 'underline')
+                    .style('cursor', 'pointer');
+
+                d3.select(obj.divId + " > svg > g > g[class='qkeyButton']").on('mousedown',function () {
+                    qkeyButton.onclick();
+                })
+            }
+        }
+
 
         //Click on reset zoom function
         d3.select(obj.divId+" > svg > g > g[class='resetZoom']").on("mousedown",function () {
@@ -3236,7 +3580,6 @@ function d3Scattered(obj) {
 
     return chart;
 
-
 }
 
 function d3Chart(temp) {
@@ -3244,23 +3587,21 @@ function d3Chart(temp) {
     obj = copyObjaa(temp);
     switch (obj.chart.type){
         case 'line':
-            new d3Line(obj);
+            new D3Line(obj);
             break;
         case 'area':
-            new d3Area(obj);
+            new D3Area(obj);
             break;
         case 'column':
-            new d3Stacked(obj);
+            new D3Stacked(obj);
             break;
         case 'scattered':
-            new d3Scattered(obj);
+            new D3Scattered(obj);
             break;
         case 'bar':
-            new d3GroupedBar(obj);
+            new D3GroupedBar(obj);
             break;
     }
-    delete obj
-    delete temp
 }
 
 function copyObjaa(object) {
@@ -3295,12 +3636,12 @@ function downloadAsCsv(data,title){
         }
 
         if(maxLength<data[i].data.length){
-            maxLength = data[i].data.length
+            maxLength = data[i].data.length;
             maxLengthIndex = i
         }
     }
     for(i=0;i<maxLength;i++){
-        string = string + data[maxLengthIndex].data[i].date + ","
+        string = string + data[maxLengthIndex].data[i].date + ",";
         for(var j=0;j<data.length;j++){
             if((j+1)==data.length){
                 string  = string + (data[j].data[i]?""+data[j].data[i].y+"":"") + "\n";
