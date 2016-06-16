@@ -165,7 +165,6 @@ function d3Legend() {
     chart.margin = function(_) {
         if (!arguments.length) return margin;
         margin = _;
-        margin.top = 0
         return chart;
     };
 
@@ -201,6 +200,7 @@ function d3Legend() {
 function d3Area(obj) {
     var chart = {};
 
+    var downloadFlag = false;
     var data = obj.series;
 
     //Setting margin and width and height
@@ -481,6 +481,55 @@ function d3Area(obj) {
             .attr("text-anchor", "middle")
             .style("font-size","12px")
             .text("Reset Zoom");
+
+        //Download data button
+        svg.append('g').attr('class','download')
+            .classed('hidden',downloadFlag)
+            .style("z-index",1000)
+            .append("rect")
+            .attr('x',width)
+            .attr("y",10)
+            .attr("rx",2)
+            .style("fill","#f2f2f2")
+            .style("stroke","#666666")
+            .style("stroke-width","1px")
+
+        d3.select(obj.divId+" > svg > g > g[class='download']").append('text')
+            .attr('x',width-10)
+            .attr("y",10)
+            .attr('font-family', 'FontAwesome')
+            .attr('font-size', '1.5em')
+            .text('\uf0ab')
+            .style("cursor","pointer");
+
+        //Graph Detail button
+        svg.append('g').attr('class','graphDetails')
+            .classed('hidden',downloadFlag)
+            .style("z-index",1000)
+            .append("rect")
+            .attr('x',width)
+            .attr("y",10)
+            .attr("rx",2)
+            .style("fill","#f2f2f2")
+            .style("stroke","#666666")
+            .style("stroke-width","1px")
+
+        d3.select(obj.divId+" > svg > g > g[class='graphDetails']").append('text')
+            .attr('x',width-40)
+            .attr("y",10)
+            .attr('font-family', 'FontAwesome')
+            .attr('font-size', '1.5em')
+            .text('\uf10c')
+            .style("cursor","pointer");
+
+        d3.select(obj.divId+" > svg > g > g[class='download']").on("mousedown",function () {
+            downloadAsCsv(rawData,obj.title.text)
+        });
+
+        d3.select(obj.divId+" > svg > g > g[class='graphDetails']").on("mousedown",function () {
+
+        });
+
 
 
         //Click on reset zoom function
@@ -823,6 +872,8 @@ function d3GroupedBar(obj) {
 
     var data = obj.series;
 
+    var downloadFlag = false;
+
     //Setting margin and width and height
     var margin = {top: 20, right: 30, bottom: 60, left: 50},
         width = $(obj.divId).width() - margin.left - margin.right,
@@ -1071,6 +1122,54 @@ function d3GroupedBar(obj) {
             .style("font-size", "12px")
             .text("Reset Zoom");
 
+        //Download data button
+        svg.append('g').attr('class','download')
+            .classed('hidden',downloadFlag)
+            .style("z-index",1000)
+            .append("rect")
+            .attr('x',width)
+            .attr("y",10)
+            .attr("rx",2)
+            .style("fill","#f2f2f2")
+            .style("stroke","#666666")
+            .style("stroke-width","1px")
+
+        d3.select(obj.divId+" > svg > g > g[class='download']").append('text')
+            .attr('x',width-10)
+            .attr("y",10)
+            .attr('font-family', 'FontAwesome')
+            .attr('font-size', '1.5em')
+            .text('\uf0ab')
+            .style("cursor","pointer");
+
+        //Graph Detail button
+        svg.append('g').attr('class','graphDetails')
+            .classed('hidden',downloadFlag)
+            .style("z-index",1000)
+            .append("rect")
+            .attr('x',width)
+            .attr("y",10)
+            .attr("rx",2)
+            .style("fill","#f2f2f2")
+            .style("stroke","#666666")
+            .style("stroke-width","1px")
+
+        d3.select(obj.divId+" > svg > g > g[class='graphDetails']").append('text')
+            .attr('x',width-40)
+            .attr("y",10)
+            .attr('font-family', 'FontAwesome')
+            .attr('font-size', '1.5em')
+            .text('\uf10c')
+            .style("cursor","pointer");
+
+        d3.select(obj.divId+" > svg > g > g[class='download']").on("mousedown",function () {
+            downloadAsCsv(rawData,obj.title.text)
+        });
+
+        d3.select(obj.divId+" > svg > g > g[class='graphDetails']").on("mousedown",function () {
+
+        });
+
 
         //Click on reset zoom function
         d3.select(obj.divId+" > svg > g > g[class='resetZoom']").on("mousedown", function () {
@@ -1222,7 +1321,8 @@ function d3GroupedBar(obj) {
                             .attr("y", (margin.top))
                             .attr("width", Math.abs(m[0] - origin[0]))
                             .attr("height", height-margin.top);
-                    })
+                    });
+                console.log()
                     .on("mouseup.zoomRect", function (d) {  //function to run mouse is released
 
                         //stop above event listner
@@ -1296,6 +1396,8 @@ function d3Line(obj) {
     var chart = {};
 
     var data = obj.series;
+
+    var downloadFlag = false;
 
     //Setting margin and width and height
     var margin = {top: 20, right: 30, bottom:data.length>25?120:90, left: 50},
@@ -1570,6 +1672,54 @@ function d3Line(obj) {
             .attr("text-anchor", "middle")
             .style("font-size","12px")
             .text("Reset Zoom");
+
+        //Download data button
+        svg.append('g').attr('class','download')
+            .classed('hidden',downloadFlag)
+            .style("z-index",1000)
+            .append("rect")
+            .attr('x',width)
+            .attr("y",10)
+            .attr("rx",2)
+            .style("fill","#f2f2f2")
+            .style("stroke","#666666")
+            .style("stroke-width","1px")
+
+        d3.select(obj.divId+" > svg > g > g[class='download']").append('text')
+            .attr('x',width-10)
+            .attr("y",10)
+            .attr('font-family', 'FontAwesome')
+            .attr('font-size', '1.5em')
+            .text('\uf0ab')
+            .style("cursor","pointer");
+
+        //Graph Detail button
+        svg.append('g').attr('class','graphDetails')
+            .classed('hidden',downloadFlag)
+            .style("z-index",1000)
+            .append("rect")
+            .attr('x',width)
+            .attr("y",10)
+            .attr("rx",2)
+            .style("fill","#f2f2f2")
+            .style("stroke","#666666")
+            .style("stroke-width","1px")
+
+        d3.select(obj.divId+" > svg > g > g[class='graphDetails']").append('text')
+            .attr('x',width-40)
+            .attr("y",10)
+            .attr('font-family', 'FontAwesome')
+            .attr('font-size', '1.5em')
+            .text('\uf10c')
+            .style("cursor","pointer");
+
+        d3.select(obj.divId+" > svg > g > g[class='download']").on("mousedown",function () {
+            downloadAsCsv(rawData,obj.title.text)
+        });
+
+        d3.select(obj.divId+" > svg > g > g[class='graphDetails']").on("mousedown",function () {
+            obj.exporting.buttons.customButton.onclick(obj)
+        });
 
         //Click on reset zoom function
         d3.select(obj.divId+" > svg > g > g[class='resetZoom']").on("mousedown",function () {
@@ -1873,6 +2023,7 @@ function d3Line(obj) {
         });
 
 
+
         function hover() {
             svg.selectAll("path").classed("line-hover", function (d) {
                 return d.hover
@@ -1911,6 +2062,8 @@ function d3Stacked(obj) {
     var chart = {};
 
     var data = obj.series;
+
+    var downloadFlag = false;
 
     //Setting margin and width and height
     var margin = {top: 20, right: 30, bottom: 60, left: 50},
@@ -2167,6 +2320,56 @@ function d3Stacked(obj) {
             .style("font-size", "12px")
             .text("Reset Zoom");
 
+        //Download data button
+        svg.append('g').attr('class','download')
+            .classed('hidden',downloadFlag)
+            .style("z-index",1000)
+            .append("rect")
+            .attr('x',width)
+            .attr("y",10)
+            .attr("rx",2)
+            .style("fill","#f2f2f2")
+            .style("stroke","#666666")
+            .style("stroke-width","1px")
+
+        d3.select(obj.divId+" > svg > g > g[class='download']").append('text')
+            .attr('x',width-10)
+            .attr("y",10)
+            .attr('font-family', 'FontAwesome')
+            .attr('font-size', '1.5em')
+            .text('\uf0ab')
+            .style("cursor","pointer");
+
+        //Graph Detail button
+        svg.append('g').attr('class','graphDetails')
+            .classed('hidden',downloadFlag)
+            .style("z-index",1000)
+            .append("rect")
+            .attr('x',width)
+            .attr("y",10)
+            .attr("rx",2)
+            .style("fill","#f2f2f2")
+            .style("stroke","#666666")
+            .style("stroke-width","1px")
+
+        d3.select(obj.divId+" > svg > g > g[class='graphDetails']").append('text')
+            .attr('x',width-40)
+            .attr("y",10)
+            .attr('font-family', 'FontAwesome')
+            .attr('font-size', '1.5em')
+            .text('\uf10c')
+            .style("cursor","pointer");
+
+        d3.select(obj.divId+" > svg > g > g[class='download']").on("mousedown",function () {
+            downloadAsCsv(rawData,obj.title.text)
+        });
+
+        d3.select(obj.divId+" > svg > g > g[class='graphDetails']").on("mousedown",function () {
+
+        });
+
+
+
         //Click on reset zoom function
         d3.select(obj.divId+" > svg > g > g[class='resetZoom']").on("mousedown", function () {
             console.log("reset triggered");
@@ -2286,7 +2489,9 @@ function d3Stacked(obj) {
                 var legends = series.map(function (d) {
                     return d.label;
                 });
-                var xpos = parseInt(cord[0]/(x.rangeBand()));
+
+                var xpos = parseInt(Math.max(0,(cord[0]-margin.left))/(x.rangeBand()));
+                xpos = xpos>series[0].data.length?series[0].data.length-1:xpos
                 var foundFlag = d.x instanceof Date ? moment(series[0].data[xpos].x)==moment(d.x):series[0].data[xpos].x==d.x;
                 while(foundFlag==false)
                 {
@@ -2408,6 +2613,8 @@ function d3Scattered(obj) {
     var chart = {};
 
     var data = obj.series;
+
+    var downloadFlag = false;
 
     //Setting margin and width and height
     var margin = {top: 20, right: 30, bottom: 90, left: 50},
@@ -2612,6 +2819,8 @@ function d3Scattered(obj) {
     //chart function to create chart
     chart.plot =function () {
 
+        console.log(margin);
+
         //Empty the container before loading
         d3.selectAll(obj.divId+" > *").remove();
 
@@ -2671,6 +2880,54 @@ function d3Scattered(obj) {
             .attr("text-anchor", "middle")
             .style("font-size","12px")
             .text("Reset Zoom");
+
+        //Download data button
+        svg.append('g').attr('class','download')
+            .classed('hidden',downloadFlag)
+            .style("z-index",1000)
+            .append("rect")
+            .attr('x',width)
+            .attr("y",10)
+            .attr("rx",2)
+            .style("fill","#f2f2f2")
+            .style("stroke","#666666")
+            .style("stroke-width","1px")
+
+        d3.select(obj.divId+" > svg > g > g[class='download']").append('text')
+            .attr('x',width-10)
+            .attr("y",10)
+            .attr('font-family', 'FontAwesome')
+            .attr('font-size', '1.5em')
+            .text('\uf0ab')
+            .style("cursor","pointer");
+
+        //Graph Detail button
+        svg.append('g').attr('class','graphDetails')
+            .classed('hidden',downloadFlag)
+            .style("z-index",1000)
+            .append("rect")
+            .attr('x',width)
+            .attr("y",10)
+            .attr("rx",2)
+            .style("fill","#f2f2f2")
+            .style("stroke","#666666")
+            .style("stroke-width","1px")
+
+        d3.select(obj.divId+" > svg > g > g[class='graphDetails']").append('text')
+            .attr('x',width-40)
+            .attr("y",10)
+            .attr('font-family', 'FontAwesome')
+            .attr('font-size', '1.5em')
+            .text('\uf10c')
+            .style("cursor","pointer");
+
+        d3.select(obj.divId+" > svg > g > g[class='download']").on("mousedown",function () {
+            downloadAsCsv(rawData,obj.title.text)
+        });
+
+        d3.select(obj.divId+" > svg > g > g[class='graphDetails']").on("mousedown",function () {
+
+        });
 
         //Click on reset zoom function
         d3.select(obj.divId+" > svg > g > g[class='resetZoom']").on("mousedown",function () {
@@ -2982,7 +3239,6 @@ function d3Scattered(obj) {
 
 }
 
-
 function d3Chart(temp) {
     var obj = JSON.parse(JSON.stringify(temp));
     obj = copyObjaa(temp);
@@ -3007,13 +3263,12 @@ function d3Chart(temp) {
     delete temp
 }
 
-
 function copyObjaa(object) {
     var temp = {};
     for (var key in object) {
         if(object.hasOwnProperty(key)){
             if(typeof object[key]=='object'&&Array.isArray(object[key])==false){
-                temp[key] = copyObj(object[key])
+                temp[key] = copyObjaa(object[key])
             }else {
                 temp[key] = object[key]
             }
@@ -3025,4 +3280,41 @@ function copyObjaa(object) {
 function isFunction(functionToCheck) {
     var getType = {};
     return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
+}
+
+function downloadAsCsv(data,title){
+
+    var string = " ",maxLength=0,maxLengthIndex=0;
+    string = string + "xAxis,";
+    for(var i=0;i<data.length;i++){
+        if((i+1)==data.length){
+            string  = string + data[i].label + "\n"
+        }
+        else{
+            string  = string + data[i].label + ","
+        }
+
+        if(maxLength<data[i].data.length){
+            maxLength = data[i].data.length
+            maxLengthIndex = i
+        }
+    }
+    for(i=0;i<maxLength;i++){
+        string = string + data[maxLengthIndex].data[i].date + ","
+        for(var j=0;j<data.length;j++){
+            if((j+1)==data.length){
+                string  = string + (data[j].data[i]?""+data[j].data[i].y+"":"") + "\n";
+            }else{
+                string  = string + (data[j].data[i]?""+data[j].data[i].y+"":"") + ",";
+            }
+        }
+    }
+
+    var a = $('<a/>', {
+        style: 'display:none',
+        href: 'data:application/octet-stream;base64,' + btoa(string),
+        download: title+'.csv'
+    }).appendTo('body');
+    a[0].click();
+    a.remove();
 }
