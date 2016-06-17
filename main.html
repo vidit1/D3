@@ -16,6 +16,7 @@
     <script src="bower_components/moment/min/moment.min.js"></script>
     <script src="d3.js"></script>
     <script src="d3Chart.js"></script>
+    <script src="chartTypes/multiple.js"></script>
 </head>
 <body>
 <div id="test1"></div>
@@ -157,12 +158,8 @@
                 }
             }
         };
-        var chart1 = d3Chart(obj1);
-        var chart2 = d3Chart(obj2);
-        var chart3 = d3Chart(obj3);
-        var chart4 = d3Chart(obj4);
-        var chart5 = d3Chart(obj5);
-    })
+        var chart1 = D3Multiple(obj1);
+        })
 </script>
 </body>
 </html>
