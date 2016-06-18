@@ -412,17 +412,11 @@ function D3Stacked(obj) {
         }
 
 
-        var temp = d3.layout.stack()(series.map(function (c) {
-            return c.data.map(function (d) {
-                return {date: d.date, y: +d.y};
-            })
-        }));
-        for (var i = 0; i < series.length; i++) {
-            series[i].data = temp[i]
-        }
+        
         x.domain(series[0].data.map(function (d) {
             return d.date;
         }));
+
         var mult = Math.max(1, Math.floor(width / x.domain().length));
         x.rangeBands([0, width], 0.1, 0);
         y.domain([

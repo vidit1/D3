@@ -2577,7 +2577,7 @@ function D3Stacked(obj) {
         });
 
         var qkeyButton={},textLength=0
-        if(obj.exporting.buttons.hasOwnProperty('qkeyButton')){
+        if(obj.exporting&&obj.exporting.buttons.hasOwnProperty('qkeyButton')){
             qkeyButton = obj.exporting.buttons.qkeyButton;
             console.log(qkeyButton);
             if(qkeyButton.type=="legendToggele"){

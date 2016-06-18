@@ -154,6 +154,8 @@ svg *::-webkit-selection {
     cursor: pointer;
 }
 
+.axis-line > .tick {
+}
 /*.axis--x path {*/
 /*display: none;*/
 /*}*/

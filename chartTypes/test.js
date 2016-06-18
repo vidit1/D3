@@ -1,7 +1,7 @@
 /**
  * Created by vidit on 6/10/16.
  */
-function D3Multiple(obj) {
+function D3Stacked111111(obj) {
 
     d3.selectAll(obj.divId).on('mousemove',null)
         .on('mouseout',null)
@@ -96,8 +96,8 @@ function D3Multiple(obj) {
     for (var i = 0; i < cities.length; i++) {
         var cityCopyObj = {};
         if(i<=location){
-            cityCopyObj.data = cities[i];
-            cityCopyObj.label = color.domain()[i]
+        cityCopyObj.data = cities[i];
+        cityCopyObj.label = color.domain()[i]
         }else{
             cityCopyObj.data= cities[i].data;
             cityCopyObj.label= cities[i].label;
@@ -464,12 +464,12 @@ function D3Multiple(obj) {
             }) + 4
         ]).nice();
         console.log(d3.min(series.filter(function (d) {
-                return !d.location;
-            }), function (c) {
-                return d3.min(c.data, function (v) {
-                    return v.y;
-                });
-            }) + 4)
+            return !d.location;
+        }), function (c) {
+            return d3.min(c.data, function (v) {
+                return v.y;
+            });
+        }) + 4)
         y1.domain([
             d3.min(series.filter(function (d) {
                 return !d.location;
