@@ -8,7 +8,8 @@ JS Files:
 `<script src="d3Chart/d3Chart.js"></script>`  
 Stylesheet:  
 `<link rel="stylesheet" href="d3Chart/d3.css">`  
- ### Chart Types
+ 
+### Chart Types
  * Line Chart
  * Area Chart
  * Bar Chart
@@ -16,7 +17,7 @@ Stylesheet:
  * Pie Chart
  * Multiple Axis Chart (Bar Chart + Line Chart)
 
- ### Features of a graph
+### Features of a graph
  * Leggend Toggle
  * Select And Deselect all the legend on a single click
  * Tooltip functionality
