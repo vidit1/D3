@@ -2,9 +2,9 @@
 A library built on d3 to help plotting different type of charts. 
 
 # View examples and features
-`git clone https://github.com/vidit1/D3.git
-cd ./D3
-python -m SimpleHTTPServer 8000`
+`git clone https://github.com/vidit1/D3.git`
+`cd ./D3`
+`python -m SimpleHTTPServer 8000`
 Open `localhost:8000/main.html`
 
 ## How To use
@@ -31,5 +31,3 @@ Stylesheet:
  * Click + Drag to zoom (Reset zoom)
  * Download CSV
  * Information Modal for chart information
-
-
