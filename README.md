@@ -1,5 +1,12 @@
 # D3 Charts
 A library built on d3 to help plotting different type of charts. 
+
+# View examples and features
+`git clone https://github.com/vidit1/D3.git
+cd ./D3
+python -m SimpleHTTPServer 8000`
+Open `localhost:8000/main.html`
+
 ## How To use
 Clone the repo and inclue the follwing files.   
 JS Files:  
